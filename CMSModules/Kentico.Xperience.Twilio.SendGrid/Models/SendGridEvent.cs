@@ -43,7 +43,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Models
         /// <summary>
         /// The UNIX timestamp of when the message was sent.
         /// </summary>
-        public string Timestamp
+        public long Timestamp
         {
             get;
             set;

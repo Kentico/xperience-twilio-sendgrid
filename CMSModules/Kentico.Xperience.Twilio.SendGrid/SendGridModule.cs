@@ -85,6 +85,7 @@ namespace Kentico.Xperience.Twilio.SendGrid
         /// </summary>
         private void LogContactBounce(object sender, SendGridEventArgs e)
         {
+            // TODO: Check if bounce monitoring is enabled?
             var contact = ContactInfo.Provider.Get()
                 .TopN(1)
                 .WhereEquals(nameof(ContactInfo.ContactEmail), e.SendGridEvent.Email)
