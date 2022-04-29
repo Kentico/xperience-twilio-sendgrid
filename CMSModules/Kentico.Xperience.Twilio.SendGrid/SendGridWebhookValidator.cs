@@ -71,8 +71,11 @@ namespace Kentico.Xperience.Twilio.SendGrid
             var timestampedPayload = timestamp + payload;
             var decodedSignature = Signature.fromBase64(signature);
             var isValid = Ecdsa.verify(timestampedPayload, decodedSignature, publicKey);
-
-            eventLogService.LogError(nameof(SendGridWebhookValidator), nameof(VerifySignature), "Received an invalid request signature.");
+            if (!isValid)
+            {
+                eventLogService.LogError(nameof(SendGridWebhookValidator), nameof(VerifySignature), "Received an invalid request signature.");
+            }
+            
             return isValid;
         }
     }
