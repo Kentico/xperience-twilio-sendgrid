@@ -1,4 +1,6 @@
-﻿namespace Kentico.Xperience.Twilio.SendGrid.Models
+﻿using Newtonsoft.Json;
+
+namespace Kentico.Xperience.Twilio.SendGrid.Models
 {
     /// <summary>
     /// Represents a SendGrid webhook event.
@@ -6,6 +8,28 @@
     /// <remarks>See <see href="https://docs.sendgrid.com/for-developers/tracking-events/event"/>.</remarks>
     public class SendGridEvent
     {
+        /// <summary>
+        /// The Xperience newsletter issue ID. Not available for "bounce" events.
+        /// </summary>
+        [JsonProperty(PropertyName = "X-CMS-IssueID")]
+        public string IssueId
+        {
+            get;
+            set;
+        }
+
+
+        /// <summary>
+        /// The Xperience newsletter subscriber ID. Not available for "bounce" events.
+        /// </summary>
+        [JsonProperty(PropertyName = "X-CMS-SubscriberID")]
+        public string SubscriberId
+        {
+            get;
+            set;
+        }
+
+
         /// <summary>
         /// The email address of the recipient.
         /// </summary>
@@ -29,6 +53,7 @@
         /// <summary>
         /// The unique ID attached to the message by the originating system.
         /// </summary>
+        [JsonProperty(PropertyName = "smtp-id")]
         public string SmtpId
         {
             get;
@@ -69,7 +94,8 @@
         /// <summary>
         /// A unique ID to this event that you can use for deduplication purposes. These IDs are up to 100 characters long and are URL safe.
         /// </summary>
-        public string SgEventId
+        [JsonProperty(PropertyName = "sg_event_id")]
+        public string EventId
         {
             get;
             set;
@@ -80,7 +106,8 @@
         /// The unique, internal SendGrid ID for the message. The first half of this ID is pulled from the <see cref="SmtpId"/>. The message
         /// ID will be included in most cases. In the event of an asynchronous bounce, the message ID will not be available.
         /// </summary>
-        public string SgMessageId
+        [JsonProperty(PropertyName = "sg_message_id")]
+        public string MessageId
         {
             get;
             set;
@@ -92,6 +119,7 @@
         /// it means that SendGrid has received signals indicating that a recipient with MPP enabled has triggered an open event. When this field is
         /// false, it indicates that the event was triggered by a conventional open.
         /// </summary>
+        [JsonProperty(PropertyName = "sg_machine_open")]
         public bool SgMachineOpen
         {
             get;
@@ -162,6 +190,7 @@
         /// <summary>
         /// If there is more than one of the same links in an email, this tells you which of those identical links was clicked.
         /// </summary>
+        [JsonProperty(PropertyName = "url_offset")]
         public int UrlOffset
         {
             get;
@@ -183,6 +212,7 @@
         /// The ID of the unsubscribe group the recipient's email address is included in. ASM IDs correspond to the ID that is returned when
         /// you create an unsubscribe group.
         /// </summary>
+        [JsonProperty(PropertyName = "asm_group_id")]
         public int AsmGroupId
         {
             get;

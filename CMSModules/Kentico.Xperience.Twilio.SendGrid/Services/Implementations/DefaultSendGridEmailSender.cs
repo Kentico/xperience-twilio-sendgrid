@@ -54,10 +54,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                     Subject = mailMessage.Subject,
                     From = new EmailAddress(mailMessage.From.Address, mailMessage.From.DisplayName),
                     MailSettings = sendGridConfigurationProvider.GetMailSettings(siteName),
-                    TrackingSettings = sendGridConfigurationProvider.GetTrackingSettings(siteName),
-                    Headers = mailMessage.Headers.AllKeys.ToDictionary(k => k, k => mailMessage.Headers[k])
+                    TrackingSettings = sendGridConfigurationProvider.GetTrackingSettings(siteName)
                 };
-
                 var ipPoolName = sendGridConfigurationProvider.GetIpPoolName(siteName);
                 if (!String.IsNullOrEmpty(ipPoolName))
                 {
@@ -77,8 +75,13 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                     sendGridMessage.AddBccs(mailMessage.Bcc.Select(bcc => new EmailAddress(bcc.Address)).ToList());
                 }
 
+                // Add newsletter header values for retrieval in events
+                var xperienceHeaders = mailMessage.Headers.AllKeys.ToDictionary(k => k, k => mailMessage.Headers[k].Trim());
+                sendGridMessage.AddGlobalCustomArgs(xperienceHeaders);
+
                 AddMessageContents(mailMessage, sendGridMessage);
                 AddMessageAttachments(mailMessage, sendGridMessage);
+                
 
                 return sendGridMessage;
             }

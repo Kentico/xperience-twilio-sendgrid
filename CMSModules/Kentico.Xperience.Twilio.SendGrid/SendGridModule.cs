@@ -4,6 +4,7 @@ using CMS.ContactManagement;
 using CMS.Core;
 using CMS.DataEngine;
 using CMS.Helpers;
+using CMS.Newsletters;
 
 using Kentico.Xperience.Twilio.SendGrid;
 using Kentico.Xperience.Twilio.SendGrid.Events;
@@ -46,12 +47,35 @@ namespace Kentico.Xperience.Twilio.SendGrid
             // Map controller routes
             GlobalConfiguration.Configuration.Routes.MapHttpRoute(
                 "xperience-sendgridevents",
-                "sendgrid/events",
+                "xperience-sendgrid/events",
                 defaults: new { controller = "SendGrid", action = "ReceiveEvents" }
             );
 
             // Register event handlers
             SendGridEvents.Bounce.After += LogContactBounce;
+            SendGridEvents.Drop.After += MarkIssueUndelivered;
+        }
+
+
+        /// <summary>
+        /// Increment a newsletter issue's <see cref="IssueInfo.IssueBounces"/> when an email is dropped.
+        /// </summary>
+        private void MarkIssueUndelivered(object sender, SendGridEventArgs e)
+        {
+            var issueId = ValidationHelper.GetInteger(e.SendGridEvent.IssueId, 0);
+            if (issueId == 0)
+            {
+                return;
+            }
+
+            var issueInfo = IssueInfo.Provider.Get(issueId);
+            if (issueInfo == null)
+            {
+                return;
+            }
+
+            issueInfo.IssueBounces++;
+            issueInfo.Update();
         }
 
 
