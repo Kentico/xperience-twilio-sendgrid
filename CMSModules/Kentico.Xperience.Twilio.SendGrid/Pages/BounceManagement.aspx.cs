@@ -1,6 +1,8 @@
 ﻿using CMS.ContactManagement;
 using CMS.Core;
+using CMS.DataEngine;
 using CMS.Helpers;
+using CMS.Newsletters;
 using CMS.UIControls;
 
 using Kentico.Xperience.Twilio.SendGrid.Models;
@@ -17,66 +19,24 @@ using System.Linq;
 namespace Kentico.Xperience.Twilio.SendGrid.Pages
 {
     [UIElement("Kentico.Xperience.Twilio.SendGrid", "BounceManagement")]
+    [EditedObject(IDQueryParameter = "objectid", ObjectType = NewsletterInfo.OBJECT_TYPE)]
     public partial class BounceManagement : CMSPage
     {
-        private IEnumerable<SendGridBounce> bounces;
-        private IEventLogService eventLogService;
-        private ISendGridClient sendGridClient;
-        private ISettingsService settingsService;
+        private IEnumerable<SendGridBounce> bounceData;
         
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            eventLogService = Service.Resolve<IEventLogService>();
-            sendGridClient = Service.Resolve<ISendGridClient>();
-            settingsService = Service.Resolve<ISettingsService>();
-
-            var response = sendGridClient.RequestAsync(
-                method: BaseClient.Method.GET,
-                urlPath: "suppression/bounces"
-            ).ConfigureAwait(false).GetAwaiter().GetResult();
-            var responseBody = response.Body.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (response.IsSuccessStatusCode)
-            {
-                bounces = JsonConvert.DeserializeObject<IEnumerable<SendGridBounce>>(responseBody);
-            }
-            else
-            {
-                gridReport.Visible = false;
-                gridReport.StopProcessing = true;
-                var responseError = JsonConvert.DeserializeObject<SendGridApiErrorResponse>(responseBody);
-                var errorDescriptions = responseError.Errors.Select(err =>
-                {
-                    var prefix = String.IsNullOrEmpty(err.Field) ? String.Empty : $"Field \"{err.Field}\": ";
-                    return $"- {prefix}\"{err.Message}\"";
-                });
-                var logDescription = $"Unable to load bounces from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
-                eventLogService.LogError(nameof(BounceManagement), nameof(Page_Load), logDescription);
-                ShowError("Unable to load bounces from SendGrid. Please check the Event Log.");
-            }
-
-            gridReport.OnAction += gridReport_OnAction;
+            LoadBounceData();
+            LoadGridData();
+            
             gridReport.OnExternalDataBound += gridReport_OnExternalDataBound;
-        }
-
-
-        private void gridReport_OnAction(string actionName, object actionArgument)
-        {
-            switch (actionName)
-            {
-                case "purge-sg":
-                    PurgeSendGridBounce(actionArgument);
-                    break;
-                case "purge-kx":
-                    PurgeXperienceBounces(actionArgument);
-                    break;
-            }
         }
 
 
         private object gridReport_OnExternalDataBound(object sender, string sourceName, object parameter)
         {
-            if (bounces == null)
+            if (bounceData == null)
             {
                 return parameter;
             }
@@ -85,10 +45,11 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             {
                 case "sg-bounced":
                     var email = ValidationHelper.GetString(parameter, String.Empty);
-                    return UniGridFunctions.ColoredSpanYesNo(bounces.Any(b => b.Email == email));
+                    return UniGridFunctions.ColoredSpanYesNo(bounceData.Any(b => b.Email == email));
                 case "kx-bounced":
                     // TODO: Check if bounce monitoring is enabled?
                     var drv = parameter as DataRowView;
+                    var settingsService = Service.Resolve<ISettingsService>();
                     var contactBounces = ValidationHelper.GetInteger(drv[nameof(ContactInfo.ContactBounces)], 0);
                     var bounceLimit = ValidationHelper.GetInteger(settingsService["CMSBouncedEmailsLimit"], 0);
                     return UniGridFunctions.ColoredSpanYesNo(contactBounces >= bounceLimit);
@@ -98,67 +59,92 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         }
 
 
-        private void PurgeSendGridBounce(object actionArgument)
+        private ObjectQuery<ContactGroupMemberInfo> GetContactGroupMemberIds(int newsletterId)
         {
-            var email = ValidationHelper.GetString(actionArgument, String.Empty);
-            if (String.IsNullOrEmpty(email))
-            {
-                ShowError("Unable to load contact email.");
-            }
-            if (!bounces.Any(b => b.Email == email))
-            {
-                ShowInformation("The email address is not on the SendGrid bounce list.");
-                return;
-            }
+            var groupSubscriberIds = SubscriberInfo.Provider.Get()
+                .Column(nameof(SubscriberInfo.SubscriberRelatedID))
+                .WhereEquals(nameof(SubscriberInfo.SubscriberType), PredefinedObjectType.CONTACTGROUP)
+                .WhereIn(
+                    nameof(SubscriberInfo.SubscriberID),
+                    SubscriberNewsletterInfoProvider.GetApprovedSubscriberNewsletters()
+                        .Column(nameof(SubscriberInfo.SubscriberID))
+                        .WhereEquals(nameof(NewsletterInfo.NewsletterID), newsletterId));
 
-            var queryParams = $"{{ 'email_address': '{email}' }}";
+            var contactGroupsIds = ContactGroupInfo.Provider.Get()
+                .Column(nameof(ContactGroupInfo.ContactGroupID))
+                .WhereIn(nameof(ContactGroupInfo.ContactGroupID), groupSubscriberIds);
+
+            return ContactGroupMemberInfo.Provider.Get()
+                .Column(nameof(ContactGroupMemberInfo.ContactGroupMemberRelatedID))
+                .WhereEquals(nameof(ContactGroupMemberInfo.ContactGroupMemberType), (int)ContactGroupMemberTypeEnum.Contact)
+                .WhereIn(nameof(ContactGroupMemberInfo.ContactGroupMemberContactGroupID), contactGroupsIds);
+        }
+
+
+        private ObjectQuery<SubscriberInfo> GetContactSubscriberIds(int newsletterId)
+        {
+            return SubscriberInfo.Provider.Get()
+                .Column(nameof(SubscriberInfo.SubscriberRelatedID))
+                .WhereEquals(nameof(SubscriberInfo.SubscriberType), PredefinedObjectType.CONTACT)
+                .WhereIn(
+                    nameof(SubscriberInfo.SubscriberID),
+                    SubscriberNewsletterInfoProvider.GetApprovedSubscriberNewsletters()
+                        .Column(nameof(SubscriberInfo.SubscriberID))
+                        .WhereEquals(nameof(NewsletterInfo.NewsletterID), newsletterId));
+        }
+
+
+        private void LoadBounceData()
+        {
+            var sendGridClient = Service.Resolve<ISendGridClient>();
             var response = sendGridClient.RequestAsync(
-                method: BaseClient.Method.DELETE,
-                urlPath: $"suppression/bounces/{email}",
-                queryParams: queryParams
+                method: BaseClient.Method.GET,
+                urlPath: "suppression/bounces"
             ).ConfigureAwait(false).GetAwaiter().GetResult();
+            var responseBody = response.Body.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
             if (response.IsSuccessStatusCode)
             {
-                URLHelper.Redirect(UIContext.UIElement.ElementTargetURL);
+                bounceData = JsonConvert.DeserializeObject<IEnumerable<SendGridBounce>>(responseBody);
             }
             else
             {
-                var responseBody = response.Body.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                gridReport.Visible = false;
+                gridReport.StopProcessing = true;
+                
                 var responseError = JsonConvert.DeserializeObject<SendGridApiErrorResponse>(responseBody);
                 var errorDescriptions = responseError.Errors.Select(err =>
                 {
                     var prefix = String.IsNullOrEmpty(err.Field) ? String.Empty : $"Field \"{err.Field}\": ";
                     return $"- {prefix}\"{err.Message}\"";
                 });
-                var logDescription = $"Unable delete bounce from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
+                var logDescription = $"Unable to load bounces from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
+                var eventLogService = Service.Resolve<IEventLogService>();
                 eventLogService.LogError(nameof(BounceManagement), nameof(Page_Load), logDescription);
-                ShowError("Unable to delete bounce from SendGrid. Please check the Event Log.");
+                ShowError("Unable to load bounces from SendGrid. Please check the Event Log.");
             }
         }
 
 
-        private void PurgeXperienceBounces(object actionArgument)
+        private void LoadGridData()
         {
-            var contactId = ValidationHelper.GetInteger(actionArgument, 0);
-            if (contactId == 0)
+            if (gridReport.StopProcessing)
             {
-                ShowError("Unable to load contact identifier.");
-            }
-
-            var contact = ContactInfo.Provider.Get(contactId);
-            if (contact == null)
-            {
-                ShowError("Unable to load contact information.");
-            }
-
-            if (contact.ContactBounces == 0)
-            {
-                ShowInformation("The contact has no bounces in Xperience.");
                 return;
             }
 
-            contact.ContactBounces = 0;
-            contact.Update();
+            var newsletterId = (EditedObject as NewsletterInfo).NewsletterID;
+            var contactsWithEmail = ContactInfo.Provider.Get().WhereNotEmpty(nameof(ContactInfo.ContactEmail));
+            var contactSubscriberIds = GetContactSubscriberIds(newsletterId);
+            var contactGroupMemberIds = GetContactGroupMemberIds(newsletterId);
+
+            var subscribedContacts = contactsWithEmail.Where(where => where
+                .WhereIn(nameof(ContactInfo.ContactID), contactSubscriberIds)
+                .Or()
+                .WhereIn(nameof(ContactInfo.ContactID), contactGroupMemberIds)
+            ).TypedResult;
+
+            gridReport.DataSource = subscribedContacts;
+            gridReport.DataBind();
         }
     }
 }
