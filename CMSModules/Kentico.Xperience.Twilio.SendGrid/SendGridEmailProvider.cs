@@ -6,6 +6,10 @@ using CMS.EmailEngine;
 using Kentico.Xperience.Twilio.SendGrid;
 using Kentico.Xperience.Twilio.SendGrid.Services;
 
+using SendGrid;
+
+using System;
+using System.ComponentModel;
 using System.Net.Mail;
 
 [assembly: RegisterCustomProvider(typeof(SendGridEmailProvider))]
@@ -18,6 +22,11 @@ namespace Kentico.Xperience.Twilio.SendGrid
     {
         protected override void SendEmailInternal(string siteName, MailMessage message, SMTPServerInfo smtpServer)
         {
+            if (Service.ResolveOptional<ISendGridClient>() == null)
+            {
+                return;
+            }
+
             var sendGridEmailSender = Service.Resolve<ISendGridEmailSender>();
             sendGridEmailSender.SendEmail(message, siteName);
         }
@@ -25,6 +34,12 @@ namespace Kentico.Xperience.Twilio.SendGrid
 
         protected override void SendEmailAsyncInternal(string siteName, MailMessage message, SMTPServerInfo smtpServer, EmailToken emailToken)
         {
+            if (Service.ResolveOptional<ISendGridClient>() == null)
+            {
+                OnSendCompleted(new AsyncCompletedEventArgs(new Exception("SendGrid client is not configured properly."), true, emailToken));
+                return;
+            }
+
             var sendGridEmailSender = Service.Resolve<ISendGridEmailSender>();
             new CMSThread(() =>
             {

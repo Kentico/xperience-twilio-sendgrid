@@ -24,7 +24,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
     /// <summary>
     /// Default implementation of <see cref="ISendGridEmailSender"/>.
     /// </summary>
-    public class DefaultSendGridEmailSender: ISendGridEmailSender
+    public class DefaultSendGridEmailSender : ISendGridEmailSender
     {
         private readonly IEventLogService eventLogService;
         private readonly ISendGridClient sendGridClient;
@@ -77,11 +77,14 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
 
                 // Add newsletter header values for retrieval in events
                 var xperienceHeaders = mailMessage.Headers.AllKeys.ToDictionary(k => k, k => mailMessage.Headers[k].Trim());
-                sendGridMessage.AddGlobalCustomArgs(xperienceHeaders);
+                if (xperienceHeaders.Count > 0)
+                {
+                    sendGridMessage.AddGlobalCustomArgs(xperienceHeaders);
+                }
 
                 AddMessageContents(mailMessage, sendGridMessage);
                 AddMessageAttachments(mailMessage, sendGridMessage);
-                
+
 
                 return sendGridMessage;
             }

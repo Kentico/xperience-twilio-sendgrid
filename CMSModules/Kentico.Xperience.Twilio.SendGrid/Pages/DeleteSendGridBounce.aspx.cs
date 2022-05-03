@@ -25,6 +25,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         private string mParametersKey;
         private const int SHOWN_RECORDS_NUMBER = 500;
         private IEventLogService eventLogService;
+        private ISendGridClient sendGridClient;
         
 
         /// <summary>
@@ -77,6 +78,9 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
         protected void Page_Init(object sender, EventArgs e)
         {
+            eventLogService = Service.Resolve<IEventLogService>();
+            sendGridClient = Service.ResolveOptional<ISendGridClient>();
+
             // Set message placeholder
             if (CurrentMaster != null)
             {
@@ -85,15 +89,17 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
             // Register save handler and closing JavaScript 
             var master = CurrentMaster as ICMSModalMasterPage;
-            if (master != null)
+            if (master != null &&  sendGridClient != null)
             {
                 master.ShowSaveAndCloseButton();
                 master.SetSaveResourceString("general.delete");
                 master.Save += btnDelete_OnClick;
                 master.SetCloseJavaScript("ReloadAndCallback();");
             }
-
-            eventLogService = Service.Resolve<IEventLogService>();
+            else
+            {
+                ShowError("The SendGrid client is not configured properly.");
+            }
         }
 
 
@@ -316,7 +322,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             var displayableName = HTMLHelper.HTMLEncode(contact.ContactEmail);
             using (new CMSActionContext { LogEvents = false })
             {
-                var sendGridClient = Service.Resolve<ISendGridClient>();
                 var queryParams = $"{{ 'email_address': '{contact.ContactEmail}' }}";
                 var response = sendGridClient.RequestAsync(
                     method: BaseClient.Method.DELETE,

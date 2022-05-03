@@ -37,13 +37,6 @@ namespace Kentico.Xperience.Twilio.SendGrid
         {
             base.OnPreInit();
 
-            // Register ISendGridClient for CMS application
-            if (SystemContext.IsCMSRunningAsMainApplication)
-            {
-                var apiKey = ValidationHelper.GetString(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_API_KEY], String.Empty);
-                Service.Use<ISendGridClient>(new SendGridClient(apiKey));
-            }
-
             // Map controller routes
             GlobalConfiguration.Configuration.Routes.MapHttpRoute(
                 "xperience-sendgridevents",
@@ -54,6 +47,18 @@ namespace Kentico.Xperience.Twilio.SendGrid
             // Register event handlers
             SendGridEvents.Bounce.After += LogContactBounce;
             SendGridEvents.Drop.After += MarkIssueUndelivered;
+
+            // Register ISendGridClient for CMS application
+            if (!SystemContext.IsCMSRunningAsMainApplication)
+            {
+                return;
+            }
+
+            var apiKey = ValidationHelper.GetString(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_API_KEY], String.Empty);
+            if (!String.IsNullOrEmpty(apiKey))
+            {
+                Service.Use<ISendGridClient>(new SendGridClient(apiKey));
+            }
         }
 
 

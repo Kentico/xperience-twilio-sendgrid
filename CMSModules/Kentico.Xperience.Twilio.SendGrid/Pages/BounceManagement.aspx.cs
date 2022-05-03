@@ -23,27 +23,27 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
     public partial class BounceManagement : CMSPage
     {
         private IEnumerable<SendGridBounce> bounceData;
-        
+
 
         protected void Page_Load(object sender, EventArgs e)
         {
             LoadBounceData();
             LoadGridData();
-            
+
             gridReport.OnExternalDataBound += gridReport_OnExternalDataBound;
         }
 
 
         private object gridReport_OnExternalDataBound(object sender, string sourceName, object parameter)
         {
-            if (bounceData == null)
-            {
-                return parameter;
-            }
-
             switch (sourceName)
             {
                 case "sg-bounced":
+                    if (bounceData == null)
+                    {
+                        return String.Empty;
+                    }
+
                     var email = ValidationHelper.GetString(parameter, String.Empty);
                     return UniGridFunctions.ColoredSpanYesNo(bounceData.Any(b => b.Email == email));
                 case "kx-bounced":
@@ -96,7 +96,13 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
         private void LoadBounceData()
         {
-            var sendGridClient = Service.Resolve<ISendGridClient>();
+            var sendGridClient = Service.ResolveOptional<ISendGridClient>();
+            if (sendGridClient == null)
+            {
+                ShowError("The SendGrid client is not configured properly.");
+                return;
+            }
+
             var response = sendGridClient.RequestAsync(
                 method: BaseClient.Method.GET,
                 urlPath: "suppression/bounces"
@@ -110,7 +116,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             {
                 gridReport.Visible = false;
                 gridReport.StopProcessing = true;
-                
+
                 var responseError = JsonConvert.DeserializeObject<SendGridApiErrorResponse>(responseBody);
                 var errorDescriptions = responseError.Errors.Select(err =>
                 {
@@ -119,7 +125,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 });
                 var logDescription = $"Unable to load bounces from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
                 var eventLogService = Service.Resolve<IEventLogService>();
-                eventLogService.LogError(nameof(BounceManagement), nameof(Page_Load), logDescription);
+                eventLogService.LogError(nameof(BounceManagement), nameof(LoadBounceData), logDescription);
                 ShowError("Unable to load bounces from SendGrid. Please check the Event Log.");
             }
         }
