@@ -18,11 +18,27 @@ using System.Linq;
 
 namespace Kentico.Xperience.Twilio.SendGrid.Pages
 {
-    [UIElement("Kentico.Xperience.Twilio.SendGrid", "BounceManagement")]
-    [EditedObject(IDQueryParameter = "objectid", ObjectType = NewsletterInfo.OBJECT_TYPE)]
     public partial class BounceManagement : CMSPage
     {
         private IEnumerable<SendGridBounce> bounceData;
+
+
+        private BaseInfo EditedNewsletterOrIssue
+        {
+            get
+            {
+                var objectId = QueryHelper.GetInteger("objectid", 0);
+                var parentId = QueryHelper.GetInteger("parentobjectid", 0);
+                if (parentId > 0)
+                {
+                    // We are editing an issue of a campaign
+                    return IssueInfo.Provider.Get(objectId);
+                }
+                
+                // We are editing a newsletter
+                return NewsletterInfo.Provider.Get(objectId);
+            }
+        }
 
 
         protected void Page_Load(object sender, EventArgs e)
@@ -47,7 +63,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                     var email = ValidationHelper.GetString(parameter, String.Empty);
                     return UniGridFunctions.ColoredSpanYesNo(bounceData.Any(b => b.Email == email));
                 case "kx-bounced":
-                    // TODO: Check if bounce monitoring is enabled?
                     var drv = parameter as DataRowView;
                     var settingsService = Service.Resolve<ISettingsService>();
                     var contactBounces = ValidationHelper.GetInteger(drv[nameof(ContactInfo.ContactBounces)], 0);
@@ -56,41 +71,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             }
 
             return parameter;
-        }
-
-
-        private ObjectQuery<ContactGroupMemberInfo> GetContactGroupMemberIds(int newsletterId)
-        {
-            var groupSubscriberIds = SubscriberInfo.Provider.Get()
-                .Column(nameof(SubscriberInfo.SubscriberRelatedID))
-                .WhereEquals(nameof(SubscriberInfo.SubscriberType), PredefinedObjectType.CONTACTGROUP)
-                .WhereIn(
-                    nameof(SubscriberInfo.SubscriberID),
-                    SubscriberNewsletterInfoProvider.GetApprovedSubscriberNewsletters()
-                        .Column(nameof(SubscriberInfo.SubscriberID))
-                        .WhereEquals(nameof(NewsletterInfo.NewsletterID), newsletterId));
-
-            var contactGroupsIds = ContactGroupInfo.Provider.Get()
-                .Column(nameof(ContactGroupInfo.ContactGroupID))
-                .WhereIn(nameof(ContactGroupInfo.ContactGroupID), groupSubscriberIds);
-
-            return ContactGroupMemberInfo.Provider.Get()
-                .Column(nameof(ContactGroupMemberInfo.ContactGroupMemberRelatedID))
-                .WhereEquals(nameof(ContactGroupMemberInfo.ContactGroupMemberType), (int)ContactGroupMemberTypeEnum.Contact)
-                .WhereIn(nameof(ContactGroupMemberInfo.ContactGroupMemberContactGroupID), contactGroupsIds);
-        }
-
-
-        private ObjectQuery<SubscriberInfo> GetContactSubscriberIds(int newsletterId)
-        {
-            return SubscriberInfo.Provider.Get()
-                .Column(nameof(SubscriberInfo.SubscriberRelatedID))
-                .WhereEquals(nameof(SubscriberInfo.SubscriberType), PredefinedObjectType.CONTACT)
-                .WhereIn(
-                    nameof(SubscriberInfo.SubscriberID),
-                    SubscriberNewsletterInfoProvider.GetApprovedSubscriberNewsletters()
-                        .Column(nameof(SubscriberInfo.SubscriberID))
-                        .WhereEquals(nameof(NewsletterInfo.NewsletterID), newsletterId));
         }
 
 
@@ -111,23 +91,23 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             if (response.IsSuccessStatusCode)
             {
                 bounceData = JsonConvert.DeserializeObject<IEnumerable<SendGridBounce>>(responseBody);
+                return;
             }
-            else
-            {
-                gridReport.Visible = false;
-                gridReport.StopProcessing = true;
 
-                var responseError = JsonConvert.DeserializeObject<SendGridApiErrorResponse>(responseBody);
-                var errorDescriptions = responseError.Errors.Select(err =>
-                {
-                    var prefix = String.IsNullOrEmpty(err.Field) ? String.Empty : $"Field \"{err.Field}\": ";
-                    return $"- {prefix}\"{err.Message}\"";
-                });
-                var logDescription = $"Unable to load bounces from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
-                var eventLogService = Service.Resolve<IEventLogService>();
-                eventLogService.LogError(nameof(BounceManagement), nameof(LoadBounceData), logDescription);
-                ShowError("Unable to load bounces from SendGrid. Please check the Event Log.");
-            }
+            gridReport.Visible = false;
+            gridReport.StopProcessing = true;
+
+            var responseError = JsonConvert.DeserializeObject<SendGridApiErrorResponse>(responseBody);
+            var errorDescriptions = responseError.Errors.Select(err =>
+            {
+                var prefix = String.IsNullOrEmpty(err.Field) ? String.Empty : $"Field \"{err.Field}\": ";
+                return $"- {prefix}\"{err.Message}\"";
+            });
+            var logDescription = $"Unable to load bounces from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
+            var eventLogService = Service.Resolve<IEventLogService>();
+
+            eventLogService.LogError(nameof(BounceManagement), nameof(LoadBounceData), logDescription);
+            ShowError("Unable to load bounces from SendGrid. Please check the Event Log.");
         }
 
 
@@ -138,19 +118,86 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 return;
             }
 
-            var newsletterId = (EditedObject as NewsletterInfo).NewsletterID;
-            var contactsWithEmail = ContactInfo.Provider.Get().WhereNotEmpty(nameof(ContactInfo.ContactEmail));
-            var contactSubscriberIds = GetContactSubscriberIds(newsletterId);
-            var contactGroupMemberIds = GetContactGroupMemberIds(newsletterId);
+            InfoDataSet<ContactInfo> subscribedContacts = null;
+            if (EditedNewsletterOrIssue is NewsletterInfo)
+            {
+                subscribedContacts = LoadNewsletterSubscribers(EditedNewsletterOrIssue as NewsletterInfo);
+            }
+            else if (EditedNewsletterOrIssue is IssueInfo)
+            {
+                subscribedContacts = LoadCampaignIssueSubscribers(EditedNewsletterOrIssue as IssueInfo);
+            }
 
-            var subscribedContacts = contactsWithEmail.Where(where => where
+            if (subscribedContacts != null)
+            {
+                gridReport.DataSource = subscribedContacts;
+                gridReport.DataBind();
+            }
+        }
+
+
+        private InfoDataSet<ContactInfo> LoadCampaignIssueSubscribers(IssueInfo issue)
+        {
+            var contactsWithEmail = ContactInfo.Provider.Get().WhereNotEmpty(nameof(ContactInfo.ContactEmail));
+            var contactGroupIds = IssueContactGroupInfo.Provider.Get()
+                .Column(nameof(IssueContactGroupInfo.ContactGroupID))
+                .WhereEquals(nameof(IssueContactGroupInfo.IssueID), issue.IssueID);
+            var contactGroupMemberIds = ContactGroupMemberInfo.Provider.Get()
+                .Column(nameof(ContactGroupMemberInfo.ContactGroupMemberRelatedID))
+                .WhereEquals(nameof(ContactGroupMemberInfo.ContactGroupMemberType), (int)ContactGroupMemberTypeEnum.Contact)
+                .WhereIn(nameof(ContactGroupMemberInfo.ContactGroupMemberContactGroupID), contactGroupIds);
+            return contactsWithEmail.Where(where => where
+                .WhereIn(nameof(ContactInfo.ContactID), contactGroupMemberIds)
+            ).TypedResult;
+        }
+
+
+        private InfoDataSet<ContactInfo> LoadNewsletterSubscribers(NewsletterInfo newsletter)
+        {
+            var contactsWithEmail = ContactInfo.Provider.Get().WhereNotEmpty(nameof(ContactInfo.ContactEmail));
+            var contactSubscriberIds = GetNewsletterContactSubscriberIds(newsletter.NewsletterID);
+            var contactGroupMemberIds = GetNewsletterContactGroupMemberIds(newsletter.NewsletterID);
+
+            return contactsWithEmail.Where(where => where
                 .WhereIn(nameof(ContactInfo.ContactID), contactSubscriberIds)
                 .Or()
                 .WhereIn(nameof(ContactInfo.ContactID), contactGroupMemberIds)
             ).TypedResult;
+        }
 
-            gridReport.DataSource = subscribedContacts;
-            gridReport.DataBind();
+
+        private ObjectQuery<ContactGroupMemberInfo> GetNewsletterContactGroupMemberIds(int newsletterId)
+        {
+            var groupSubscriberIds = SubscriberInfo.Provider.Get()
+                .Column(nameof(SubscriberInfo.SubscriberRelatedID))
+                .WhereEquals(nameof(SubscriberInfo.SubscriberType), PredefinedObjectType.CONTACTGROUP)
+                .WhereIn(
+                    nameof(SubscriberInfo.SubscriberID),
+                    SubscriberNewsletterInfoProvider.GetApprovedSubscriberNewsletters()
+                        .Column(nameof(SubscriberInfo.SubscriberID))
+                        .WhereEquals(nameof(NewsletterInfo.NewsletterID), newsletterId));
+
+            var contactGroupIds = ContactGroupInfo.Provider.Get()
+                .Column(nameof(ContactGroupInfo.ContactGroupID))
+                .WhereIn(nameof(ContactGroupInfo.ContactGroupID), groupSubscriberIds);
+
+            return ContactGroupMemberInfo.Provider.Get()
+                .Column(nameof(ContactGroupMemberInfo.ContactGroupMemberRelatedID))
+                .WhereEquals(nameof(ContactGroupMemberInfo.ContactGroupMemberType), (int)ContactGroupMemberTypeEnum.Contact)
+                .WhereIn(nameof(ContactGroupMemberInfo.ContactGroupMemberContactGroupID), contactGroupIds);
+        }
+
+
+        private ObjectQuery<SubscriberInfo> GetNewsletterContactSubscriberIds(int newsletterId)
+        {
+            return SubscriberInfo.Provider.Get()
+                .Column(nameof(SubscriberInfo.SubscriberRelatedID))
+                .WhereEquals(nameof(SubscriberInfo.SubscriberType), PredefinedObjectType.CONTACT)
+                .WhereIn(
+                    nameof(SubscriberInfo.SubscriberID),
+                    SubscriberNewsletterInfoProvider.GetApprovedSubscriberNewsletters()
+                        .Column(nameof(SubscriberInfo.SubscriberID))
+                        .WhereEquals(nameof(NewsletterInfo.NewsletterID), newsletterId));
         }
     }
 }
