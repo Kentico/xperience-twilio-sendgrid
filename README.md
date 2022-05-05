@@ -29,7 +29,7 @@ This integration allows the dipatching of all Xperience emails from the __Email 
 <add key="SendGridApiKey" value="<API key>" />
 ```
 
-### Enable SendGrid webhook events
+### Enable SendGrid Event Webhooks
 
 1. In SendGrid, open __Settings → Mail Settings → Event Webhook__.
 2. Set the following values:
@@ -92,6 +92,27 @@ namespace MySite.Twilio.SendGrid {
 
 This could be helpful if, for example, you want to use a different IP Pool for each Xperience site. Or, if you want tracking to be enabled only for certain emails.
 
+## SendGrid event webhooks
+
+SendGrid has the ability to send webhooks to your Xperience administration website when [certain events](https://docs.sendgrid.com/for-developers/tracking-events/event#delivery-events) occur. Within this integration, you can automatically increase an Xperience contact's bounces when a SendGrid email bounces, and a marketing email's __Delivery rate__ will be correctly adjusted when a "drop" event occurs. To enable this functionality, you must [enable SendGrid Event Webhooks](#enable-sendgrid-event-webhooks).
+
+SendGrid event handling is implemented via standard [Xperience event handling](https://docs.xperience.io/custom-development/handling-global-events), using custom handlers created for this integration:
+
+```cs
+SendGridEvents.Bounce.After += LogContactBounce;
+SendGridEvents.Drop.After += MarkIssueUndelivered;
+```
+
+You can view the available events in the [`SendGridEvents`](CMSModules/Kentico.Xperience.Twilio.SendGrid/Events/SendGridEvents.cs) class. If you wish to handle any of these events, you must ensure that the SendGrid Event Webhook is enabled, as described in __step #2__ of [Enable SendGrid webhook events](#enable-sendgrid-event-webhooks).
+
+## Bounce management
+
+Within the Xperience __Email marketing__ application you will find a new tab called _"Bounce management:"_
+
+![bounce-management-img]
+
+This interface allows you to remove an email address from SendGrid's __Suppressions → Bounces__ list, and you can clear the number of bounces for an Xperience contact. For newsletters, the tab can be found when editing the newsletter. For email campaigns, it appears when editing an individual email of the campaign.
+
 ## Contributing
 
 For Contributing please see [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
@@ -104,3 +125,4 @@ Distributed under the MIT License. See [LICENSE.md](LICENSE.md) for more informa
 [stackoverflow-url]: https://stackoverflow.com/tags/kentico
 [xperience-shield]: https://img.shields.io/badge/Kentico.Xperience.Libraries-v13.0.0-orange
 [xperience-url]: https://www.nuget.org/packages/Kentico.Xperience.Libraries
+[bounce-management-img]: /Assets/bounce-management.png
