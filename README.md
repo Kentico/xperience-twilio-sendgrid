@@ -31,6 +31,8 @@ This integration allows the dipatching of all Xperience emails from the __Email 
 
 ### Enable SendGrid Event Webhooks
 
+This is _optional_, but required if you'd like to handle [SendGrid Event Webhooks](#sendgrid-event-webhooks) in Xperience, and enable the default "bounce" and "drop" handling in this integration.
+
 1. In SendGrid, open __Settings → Mail Settings → Event Webhook__.
 2. Set the following values:
   - Authorization Method: None.
