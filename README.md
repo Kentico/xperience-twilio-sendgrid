@@ -41,7 +41,7 @@ This is _optional_, but required if you'd like to handle [SendGrid Event Webhook
   - Event Webhook Status: Enabled.
 3. In __Mail settings__, click __Signed Event Webhook Requests__.
 4. Enable _Signed Event Webhook Request Status_ and copy the __Verification Key__.
-5. In the CMS project's web.config `appSettings` setting, add the following setting:
+5. In the CMS project's web.config `appSettings` section, add the following setting:
 ```xml
 <add key="SendGridWebhookVerificationKey" value="<Verification key>"/>
 ```
@@ -63,7 +63,7 @@ namespace MySite.Twilio.SendGrid {
 
 ### Email settings
 
-Within SendGrid's  __Settings__, you can globally configure many [mail settings](https://docs.sendgrid.com/ui/account-and-settings/mail) and [tracking settings](https://docs.sendgrid.com/ui/account-and-settings/tracking). If you would like to fine-tune these sends per email, per marketing campaign, or per Xperience site, you can use a custom `ISendGridConfigurationProvider` or the [default implementation](CMSModules/Kentico.Xperience.Twilio.SendGrid/Services/Implementations/DefaultSendGridConfigurationProvider.cs). Our implementation allows you to globally configure the following settings via web.config `appSettings`:
+Within SendGrid's  __Settings__, you can globally configure many [mail settings](https://docs.sendgrid.com/ui/account-and-settings/mail) and [tracking settings](https://docs.sendgrid.com/ui/account-and-settings/tracking). If you would like to fine-tune these settings per email, per marketing campaign, or per Xperience site, you can use a custom `ISendGridConfigurationProvider` or the [default implementation](CMSModules/Kentico.Xperience.Twilio.SendGrid/Services/Implementations/DefaultSendGridConfigurationProvider.cs). Our implementation allows you to globally configure the following settings via web.config `appSettings`:
 
 | **Application setting** 	| **Value type** 	| **Usage** 	|
 |---	|---	|---	|
