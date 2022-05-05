@@ -52,16 +52,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                 var sendGridMessage = new SendGridMessage
                 {
                     Subject = mailMessage.Subject,
-                    From = new EmailAddress(mailMessage.From.Address, mailMessage.From.DisplayName),
-                    MailSettings = sendGridConfigurationProvider.GetMailSettings(siteName),
-                    TrackingSettings = sendGridConfigurationProvider.GetTrackingSettings(siteName)
+                    From = new EmailAddress(mailMessage.From.Address, mailMessage.From.DisplayName)
                 };
-                var ipPoolName = sendGridConfigurationProvider.GetIpPoolName(siteName);
-                if (!String.IsNullOrEmpty(ipPoolName))
-                {
-                    sendGridMessage.IpPoolName = ipPoolName;
-                }
-
                 if (mailMessage.To.Count > 0)
                 {
                     sendGridMessage.AddTos(mailMessage.To.Select(to => new EmailAddress(to.Address)).ToList());
@@ -85,6 +77,10 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                 AddMessageContents(mailMessage, sendGridMessage);
                 AddMessageAttachments(mailMessage, sendGridMessage);
 
+                // Configure settings
+                sendGridConfigurationProvider.SetMailSettings(siteName, sendGridMessage);
+                sendGridConfigurationProvider.SetTrackingSettings(siteName, sendGridMessage);
+                sendGridConfigurationProvider.SetIpPoolName(siteName, sendGridMessage);
 
                 return sendGridMessage;
             }

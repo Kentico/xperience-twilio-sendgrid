@@ -3,28 +3,31 @@
 namespace Kentico.Xperience.Twilio.SendGrid.Services
 {
     /// <summary>
-    /// Contains methods for retrieving the local configuration of the SendGrid integration.
+    /// Contains methods for setting the local configuration of the SendGrid integration.
     /// </summary>
     public interface ISendGridConfigurationProvider
     {
         /// <summary>
-        /// Gets the IP pool name to send emails from.
+        /// Sets the IP pool name of the <paramref name="sendGridMessage"/>.
         /// </summary>
         /// <param name="siteName">The Xperience site name.</param>
-        string GetIpPoolName(string siteName);
+        /// <param name="sendGridMessage">The SendGrid email being processed.</param>
+        void SetIpPoolName(string siteName, SendGridMessage sendGridMessage);
 
 
         /// <summary>
-        /// Gets the SendGrid <see cref="MailSettings"/> to apply to an email.
+        /// Sets the SendGrid <see cref="MailSettings"/> to the <paramref name="sendGridMessage"/>.
         /// </summary>
         /// <param name="siteName">The Xperience site name.</param>
-        MailSettings GetMailSettings(string siteName);
+        /// <param name="sendGridMessage">The SendGrid email being processed.</param>
+        void SetMailSettings(string siteName, SendGridMessage sendGridMessage);
 
 
         /// <summary>
-        /// Gets the SendGrid <see cref="TrackingSettings"/> to apply to an email.
+        /// Sets the SendGrid <see cref="TrackingSettings"/> to the <paramref name="sendGridMessage"/>.
         /// </summary>
         /// <param name="siteName">The Xperience site name.</param>
-        TrackingSettings GetTrackingSettings(string siteName);
+        /// <param name="sendGridMessage">The SendGrid email being processed.</param>
+        void SetTrackingSettings(string siteName, SendGridMessage sendGridMessage);
     }
 }

@@ -20,13 +20,17 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
     /// </summary>
     public class DefaultSendGridConfigurationProvider : ISendGridConfigurationProvider
     {
-        public string GetIpPoolName(string siteName)
+        public void SetIpPoolName(string siteName, SendGridMessage sendGridMessage)
         {
-            return ValidationHelper.GetString(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_IP_POOL_NAME], String.Empty);
+            var ipPoolName = ValidationHelper.GetString(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_IP_POOL_NAME], String.Empty);
+            if (!String.IsNullOrEmpty(ipPoolName))
+            {
+                sendGridMessage.IpPoolName = ipPoolName;
+            }
         }
 
 
-        public MailSettings GetMailSettings(string siteName)
+        public void SetMailSettings(string siteName, SendGridMessage sendGridMessage)
         {
             var mailSettings = new MailSettings()
             {
@@ -95,11 +99,11 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                 };
             }
 
-            return mailSettings;
+            sendGridMessage.MailSettings = mailSettings;
         }
 
 
-        public TrackingSettings GetTrackingSettings(string siteName)
+        public void SetTrackingSettings(string siteName, SendGridMessage sendGridMessage)
         {
             var trackingSettings = new TrackingSettings()
             {
@@ -121,7 +125,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                 }
             };
 
-            return trackingSettings;
+            sendGridMessage.TrackingSettings = trackingSettings;
         }
     }
 }
