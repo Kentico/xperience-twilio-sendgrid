@@ -34,7 +34,7 @@ This integration allows the dipatching of all Xperience emails from the __Email 
 1. In SendGrid, open __Settings → Mail Settings → Event Webhook__.
 2. Set the following values:
   - Authorization Method: None.
-  - HTTP Post URL: _https://[your Xperience website]/xperience-sendgrid/events_.
+  - HTTP Post URL: _https://[your Xperience CMS]/xperience-sendgrid/events_.
   - Events to be POSTed to your URL: Select at least __Dropped__ and __Bounced__, and any other events you'd like to handle.
   - Event Webhook Status: Enabled.
 3. In __Mail settings__, click __Signed Event Webhook Requests__.
@@ -92,7 +92,7 @@ namespace MySite.Twilio.SendGrid {
 
 This could be helpful if, for example, you want to use a different IP Pool for each Xperience site. Or, if you want tracking to be enabled only for certain emails.
 
-## SendGrid event webhooks
+## SendGrid Event Webhooks
 
 SendGrid has the ability to send webhooks to your Xperience administration website when [certain events](https://docs.sendgrid.com/for-developers/tracking-events/event#delivery-events) occur. Within this integration, you can automatically increase an Xperience contact's bounces when a SendGrid email bounces, and a marketing email's __Delivery rate__ will be correctly adjusted when a "drop" event occurs. To enable this functionality, you must [enable SendGrid Event Webhooks](#enable-sendgrid-event-webhooks).
 
@@ -103,7 +103,7 @@ SendGridEvents.Bounce.After += LogContactBounce;
 SendGridEvents.Drop.After += MarkIssueUndelivered;
 ```
 
-You can view the available events in the [`SendGridEvents`](CMSModules/Kentico.Xperience.Twilio.SendGrid/Events/SendGridEvents.cs) class. If you wish to handle any of these events, you must ensure that the SendGrid Event Webhook is enabled, as described in __step #2__ of [Enable SendGrid webhook events](#enable-sendgrid-event-webhooks).
+You can view the available events in the [`SendGridEvents`](CMSModules/Kentico.Xperience.Twilio.SendGrid/Events/SendGridEvents.cs) class. If you wish to handle any of these events, you must ensure that the SendGrid Event Webhook is enabled, as described in __step #2__ of [Enable SendGrid Event Webhooks](#enable-sendgrid-event-webhooks).
 
 ## Bounce management
 
