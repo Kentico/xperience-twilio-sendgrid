@@ -10,7 +10,7 @@ This integration allows the dipatching of all Xperience emails from the __Email 
 ### Import the custom module
 
 1. Open your CMS project in __Visual Studio__.
-1. Install the _SendGrid_ NuGet packages in the CMS project.
+1. Install the _SendGrid_ NuGet package in the CMS project.
 1. Download the latest _"Kentico.Xperience.Twilio.SendGrid"_ ZIP package from the [Releases](https://github.com/Kentico/xperience-twilio-sendgrid/releases/).
 1. In the Xperience adminstration, open the __Sites__ application.
 1. [Import](https://docs.xperience.io/deploying-websites/exporting-and-importing-sites/importing-a-site-or-objects) the downloaded package with the __Import files__ and __Import code files__ [settings](https://docs.xperience.io/deploying-websites/exporting-and-importing-sites/importing-a-site-or-objects#Importingasiteorobjects-Import-Objectselectionsettings) enabled.
