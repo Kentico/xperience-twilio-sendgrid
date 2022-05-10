@@ -80,6 +80,7 @@ Within SendGrid's  __Settings__, you can globally configure many [mail settings]
 | SendGridEnableGoogleAnalytics 	| bool 	| Enables tracking provided by Google Analytics. 	|
 | **Other**
 | SendGridIpPoolName 	| string 	| Sets the name of the [IP Pool](https://docs.sendgrid.com/ui/account-and-settings/ip-pools) used for sending the email. 	|
+| SendGridDebugEnabled | bool | If enabled, the full JSON of sent emails and SendGrid Event Webhooks are logged to the Event Log. |
 
 You can customize how the settings are retrieved during sending by implementing your own `ISendGridConfigurationProvider`:
 
