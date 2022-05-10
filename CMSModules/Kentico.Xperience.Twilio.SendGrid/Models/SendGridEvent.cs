@@ -9,7 +9,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Models
     public class SendGridEvent
     {
         /// <summary>
-        /// The Xperience newsletter issue ID. Not available for "bounce" events.
+        /// The Xperience newsletter issue ID.
         /// </summary>
         [JsonProperty(PropertyName = "X-CMS-IssueID")]
         public string IssueId
@@ -20,7 +20,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Models
 
 
         /// <summary>
-        /// The Xperience newsletter subscriber ID. Not available for "bounce" events.
+        /// The Xperience newsletter subscriber ID.
         /// </summary>
         [JsonProperty(PropertyName = "X-CMS-SubscriberID")]
         public string SubscriberId

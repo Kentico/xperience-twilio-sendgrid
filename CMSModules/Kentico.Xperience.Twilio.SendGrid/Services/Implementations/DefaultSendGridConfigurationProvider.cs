@@ -20,6 +20,12 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
     /// </summary>
     public class DefaultSendGridConfigurationProvider : ISendGridConfigurationProvider
     {
+        public bool DebugEnabled()
+        {
+            return ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_DEBUG], false);
+        }
+
+
         public void SetIpPoolName(string siteName, SendGridMessage sendGridMessage)
         {
             var ipPoolName = ValidationHelper.GetString(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_IP_POOL_NAME], String.Empty);

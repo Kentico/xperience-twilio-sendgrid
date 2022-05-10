@@ -3,10 +3,16 @@
 namespace Kentico.Xperience.Twilio.SendGrid.Services
 {
     /// <summary>
-    /// Contains methods for setting the local configuration of the SendGrid integration.
+    /// Contains methods for getting or setting the local configuration of the SendGrid integration.
     /// </summary>
     public interface ISendGridConfigurationProvider
     {
+        /// <summary>
+        /// Returns true if debugging is enabled and events should be logged to the Event Log.
+        /// </summary>
+        bool DebugEnabled();
+
+
         /// <summary>
         /// Sets the IP pool name of the <paramref name="sendGridMessage"/>.
         /// </summary>

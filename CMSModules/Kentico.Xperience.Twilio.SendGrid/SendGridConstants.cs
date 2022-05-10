@@ -45,6 +45,12 @@
 
 
         /// <summary>
+        /// Enables the logging of SendGrid server responses and event webhooks to the Event Log.
+        /// </summary>
+        public const string APPSETTING_DEBUG = "SendGridDebugEnabled";
+
+
+        /// <summary>
         /// Enables tracking whether a recipient clicked a link in your email.
         /// </summary>
         public const string APPSETTING_ENABLE_CLICK_TRACKING = "SendGridEnableClickTracking";

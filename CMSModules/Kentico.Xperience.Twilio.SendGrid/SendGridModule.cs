@@ -1,5 +1,4 @@
 ﻿using CMS;
-using CMS.Base;
 using CMS.ContactManagement;
 using CMS.Core;
 using CMS.DataEngine;
@@ -44,63 +43,48 @@ namespace Kentico.Xperience.Twilio.SendGrid
                 defaults: new { controller = "SendGrid", action = "ReceiveEvents" }
             );
 
-            // Register event handlers
-            SendGridEvents.Bounce.After += LogContactBounce;
-            SendGridEvents.Drop.After += MarkIssueUndelivered;
-
-            // Register ISendGridClient for CMS application
-            if (!SystemContext.IsCMSRunningAsMainApplication)
-            {
-                return;
-            }
-
             var apiKey = ValidationHelper.GetString(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_API_KEY], String.Empty);
             if (!String.IsNullOrEmpty(apiKey))
             {
                 Service.Use<ISendGridClient>(new SendGridClient(apiKey));
             }
+
+            // Register event handlers
+            SendGridEvents.Bounce.After += MarkIssueUndelivered;
+            SendGridEvents.Drop.After += MarkIssueUndelivered;
+            SendGridEvents.Block.After += MarkIssueUndelivered;
         }
 
 
         /// <summary>
-        /// Increment a newsletter issue's <see cref="IssueInfo.IssueBounces"/> when an email is dropped.
+        /// Increment a newsletter issue's <see cref="IssueInfo.IssueBounces"/> when an email can't be delivered.
+        /// Also increments a contact's <see cref="ContactInfo.ContactBounces"/> after receiving a SendGrid "bounce"
+        /// event webhook.
         /// </summary>
         private void MarkIssueUndelivered(object sender, SendGridEventArgs e)
         {
             var issueId = ValidationHelper.GetInteger(e.SendGridEvent.IssueId, 0);
-            if (issueId == 0)
-            {
-                return;
-            }
-
             var issueInfo = IssueInfo.Provider.Get(issueId);
-            if (issueInfo == null)
+            if (issueInfo != null)
             {
-                return;
+                issueInfo.IssueBounces++;
+                issueInfo.Update();
             }
 
-            issueInfo.IssueBounces++;
-            issueInfo.Update();
-        }
-
-
-        /// <summary>
-        /// Increments a contact's <see cref="ContactInfo.ContactBounces"/> after receiving a SendGrid "bounce"
-        /// event webhook.
-        /// </summary>
-        private void LogContactBounce(object sender, SendGridEventArgs e)
-        {
-            var contact = ContactInfo.Provider.Get()
+            if (e.SendGridEvent.Event == "bounce")
+            {
+                var contact = ContactInfo.Provider.Get()
                 .TopN(1)
                 .WhereEquals(nameof(ContactInfo.ContactEmail), e.SendGridEvent.Email)
                 .FirstOrDefault();
-            if (contact == null)
-            {
-                return;
-            }
+                if (contact == null)
+                {
+                    return;
+                }
 
-            contact.ContactBounces++;
-            contact.Update();
+                contact.ContactBounces++;
+                contact.Update();
+            }
         }
     }
 }
