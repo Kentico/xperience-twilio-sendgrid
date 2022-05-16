@@ -1,4 +1,6 @@
-﻿using Newtonsoft.Json;
+﻿using Kentico.Xperience.Twilio.SendGrid.Events;
+
+using Newtonsoft.Json;
 
 namespace Kentico.Xperience.Twilio.SendGrid.Models
 {
@@ -62,7 +64,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Models
 
 
         /// <summary>
-        /// The event type.
+        /// The event type which matches one of the constants in <see cref="SendGridEventName"/>.
         /// </summary>
         public string Event
         {
@@ -72,7 +74,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Models
 
 
         /// <summary>
-        /// Indicates whether a bounce <see cref="Event"/> was a hard bounce (bounce) or block (blocked).
+        /// Indicates whether a bounce <see cref="Event"/> was a soft bounce (<see cref="SendGridEventName.Bounce"/>) or block
+        /// (<see cref="SendGridEventName.Blocked"/>).
         /// </summary>
         public string Type
         {

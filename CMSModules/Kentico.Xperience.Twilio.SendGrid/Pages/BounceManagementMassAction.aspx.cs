@@ -8,10 +8,11 @@ using CMS.Helpers;
 using CMS.SiteProvider;
 using CMS.UIControls;
 
+using Kentico.Xperience.Twilio.SendGrid.Models;
+
 using SendGrid;
 
 using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Net;
 using System.Security.Principal;
@@ -20,13 +21,17 @@ using System.Web.UI;
 
 namespace Kentico.Xperience.Twilio.SendGrid.Pages
 {
-    public partial class DeleteSendGridBounce : CMSAdministrationPage, ICallbackEventHandler
+    /// <summary>
+    /// A modal dialog which performs a mass action from the SendGrid "Bounce management" UI.
+    /// </summary>
+    public partial class BounceManagementMassAction : CMSAdministrationPage, ICallbackEventHandler
     {
-        private string mParametersKey;
         private const int SHOWN_RECORDS_NUMBER = 500;
         private IEventLogService eventLogService;
         private ISendGridClient sendGridClient;
-        
+        private BounceManagementActionParameters mParameters;
+        private string mParametersKey;
+
 
         /// <summary>
         /// All errors that occurred during deletion.
@@ -45,17 +50,19 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
 
         /// <summary>
-        /// Identifiers of the contacts whose bounces will be deleted.
+        /// The parameters of the chosen mass action.
         /// </summary>
-        private ICollection<int> ContactIds
+        private BounceManagementActionParameters Parameters
         {
-            get;
-            set;
+            get
+            {
+                return mParameters ?? (mParameters = WindowHelper.GetItem(ParametersKey) as BounceManagementActionParameters);
+            }
         }
 
 
         /// <summary>
-        /// Key used to retrieve stored parameters from session.
+        /// The key used to retrieve stored parameters from session.
         /// </summary>
         private string ParametersKey
         {
@@ -63,16 +70,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             {
                 return mParametersKey ?? (mParametersKey = QueryHelper.GetString("parameters", String.Empty));
             }
-        }
-
-
-        /// <summary>
-        /// JavaScript for parent page reload when delete is shown in modal dialog.
-        /// </summary>
-        private string ReloadScript
-        {
-            get;
-            set;
         }
 
 
@@ -89,25 +86,19 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
             // Register save handler and closing JavaScript 
             var master = CurrentMaster as ICMSModalMasterPage;
-            if (master != null &&  sendGridClient != null)
+            if (master != null)
             {
                 master.ShowSaveAndCloseButton();
-                master.SetSaveResourceString("general.delete");
-                master.Save += btnDelete_OnClick;
+                master.SetSaveResourceString("Run");
+                master.Save += btnRun_OnClick;
                 master.SetCloseJavaScript("ReloadAndCallback();");
-            }
-            else
-            {
-                ShowError("The SendGrid client is not configured properly.");
             }
         }
 
 
         protected void Page_Load(object sender, EventArgs e)
         {
-            QueryHelper.ValidateHash("hash", settings: new HashSettings(String.Empty) { Redirect = true });
-
-            if (RequestHelper.IsCallback() || !InitializeProperties())
+            if (RequestHelper.IsCallback() || !ValidateParameters())
             {
                 return;
             }
@@ -122,11 +113,11 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         }
 
 
-        protected void btnDelete_OnClick(object sender, EventArgs e)
+        protected void btnRun_OnClick(object sender, EventArgs e)
         {
             TogglePanels(showContent: false);
             ctlAsyncLog.EnsureLog();
-            ctlAsyncLog.RunAsync(DeleteAllBounces, WindowsIdentity.GetCurrent());
+            ctlAsyncLog.RunAsync(RunProcess, WindowsIdentity.GetCurrent());
         }
 
 
@@ -140,7 +131,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         {
             if (!string.IsNullOrEmpty(CurrentError))
             {
-                ShowError("Errors occurred during bounce deletion.", description: CurrentError);
+                ShowError("Errors occurred during processing.", description: CurrentError);
                 LoadContactView();
             }
             else
@@ -152,7 +143,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
         private void OnCancel(object sender, EventArgs e)
         {
-            string cancelled = "Bounce deletion was cancelled.";
+            string cancelled = "The process was cancelled.";
             ctlAsyncLog.AddLog(cancelled);
             LoadContactView();
             ShowWarning(cancelled);
@@ -160,8 +151,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
 
         /// <summary>
-        /// Sets visibility of content panel and log panel.
-        /// Only one can be shown at the time.
+        /// Sets visibility of content panel and log panel. Only one can be shown at the time.
         /// </summary>
         private void TogglePanels(bool showContent)
         {
@@ -176,7 +166,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         private void RegisterCallbackScript()
         {
             var callbackEventReference = Page.ClientScript.GetCallbackEventReference(this, String.Empty, "CloseDialog", String.Empty);
-            var closeJavaScript = $"function ReloadAndCallback() {{ wopener.{ReloadScript}; {callbackEventReference} }}";
+            var closeJavaScript = $"function ReloadAndCallback() {{ wopener.{Parameters.ReloadScript}; {callbackEventReference} }}";
             ScriptHelper.RegisterClientScriptBlock(Page, GetType(), "ReloadAndCallback", closeJavaScript, true);
         }
 
@@ -186,31 +176,37 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// </summary>
         private void SetAsyncLogParameters()
         {
-            ctlAsyncLog.TitleText = "Deleting SendGrid bounces";
+            ctlAsyncLog.TitleText = Parameters.Title;
             ctlAsyncLog.OnFinished += OnFinished;
             ctlAsyncLog.OnCancel += OnCancel;
         }
 
 
         /// <summary>
-        /// Retrieves parameters from the session.
-        /// Returns <c>true</c> when all properties were set successfully.
+        /// Ensures that all parameters required for the chosen action are valid, and validates the hash.
         /// </summary>
-        private bool InitializeProperties()
+        private bool ValidateParameters()
         {
-            var parameters = WindowHelper.GetItem(ParametersKey) as MassActionParameters;
-            if (parameters == null)
+            QueryHelper.ValidateHash("hash", settings: new HashSettings(String.Empty) { Redirect = true });
+
+            if (Parameters == null)
             {
                 HandleInvalidParameters("There were no parameters found under " + ParametersKey + " key.");
                 return false;
             }
 
-            ContactIds = (parameters.IDs ?? Enumerable.Empty<int>()).ToList();
-            ReloadScript = parameters.ReloadScript;
-
-            if (ContactIds == null || ContactIds.Count == 0 || String.IsNullOrEmpty(ReloadScript))
+            if (Parameters.ContactIDs == null ||
+                Parameters.ContactIDs.Count == 0 ||
+                String.IsNullOrEmpty(Parameters.ReloadScript) ||
+                String.IsNullOrEmpty(Parameters.Title))
             {
-                HandleInvalidParameters("One or more parameters are invalid:" + Environment.NewLine + parameters);
+                HandleInvalidParameters("One or more parameters are invalid:" + Environment.NewLine + Parameters);
+                return false;
+            }
+
+            if (Parameters.ActionName == SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE && sendGridClient == null)
+            {
+                HandleInvalidParameters("The SendGrid client is not configured properly.");
                 return false;
             }
 
@@ -223,8 +219,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// </summary>
         private void HandleInvalidParameters(string eventDescription)
         {
-            eventLogService.LogError(nameof(DeleteSendGridBounce), nameof(HandleInvalidParameters), eventDescription);
-            RedirectToInformation(GetString("massdelete.invalidparameters"));
+            eventLogService.LogError(nameof(BounceManagementMassAction), nameof(HandleInvalidParameters), eventDescription);
+            RedirectToInformation("The requirements for the chosen action are invalid, please check the Event Log.");
         }
 
 
@@ -233,8 +229,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// </summary>
         private void LoadContactView()
         {
-            PageTitle.TitleText = "Deleting SendGrid bounces";
-            headAnnouncement.Text = "The following contacts will have their bounces deleted:";
+            PageTitle.TitleText = Parameters.Title;
+            headAnnouncement.Text = "The action will be performed for the following contacts:";
             lblItems.Text = GetDisplayableEmails();
         }
 
@@ -247,7 +243,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             var builder = new StringBuilder();
             AppendLimitMessage(builder);
 
-            var emails = GetContactsToDeleteBounces()
+            var emails = GetSelectedContacts()
                 .Take(SHOWN_RECORDS_NUMBER)
                 .ToList()
                 .Where(contact => contact.CheckPermissions(PermissionsEnum.Read, CurrentSiteName, CurrentUser))
@@ -272,7 +268,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// </summary>
         private void AppendLimitMessage(StringBuilder builder)
         {
-            if (ContactIds.Count <= SHOWN_RECORDS_NUMBER)
+            if (Parameters.ContactIDs.Count <= SHOWN_RECORDS_NUMBER)
             {
                 return;
             }
@@ -284,22 +280,30 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 <br />",
                 GetString("massdelete.showlimit"));
 
-            builder.AppendFormat(moreThanMax, SHOWN_RECORDS_NUMBER, ContactIds.Count);
+            builder.AppendFormat(moreThanMax, SHOWN_RECORDS_NUMBER, Parameters.ContactIDs.Count);
         }
 
 
         /// <summary>
-        /// Handles deleting of contact bounces within asynchronous dialog.
+        /// Performs the chosen mass action within an asynchronous dialog.
         /// </summary>
-        private void DeleteAllBounces(object parameter)
+        private void RunProcess(object parameter)
         {
             var errorLog = new StringBuilder();
             using (var logProgress = new LogContext())
             {
-                GetContactsToDeleteBounces()
+                GetSelectedContacts()
                     .ForEachObject(contact =>
                     {
-                        DeleteBounces(contact, errorLog, logProgress);
+                        switch (Parameters.ActionName)
+                        {
+                            case SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE:
+                                DeleteSendGridBounces(contact, errorLog, logProgress);
+                                break;
+                            case SendGridConstants.ACTION_DELETE_XPERIENCE_BOUNCE:
+                                DeleteXperienceBounces(contact, errorLog, logProgress);
+                                break;
+                        }
                     });
             }
 
@@ -311,14 +315,31 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
 
         /// <summary>
-        /// Deletes bounces for a single contact. Handles logging to event log and to deleting page.
+        /// Sets <see cref="ContactInfo.ContactBounces"/> to zero for the provided <paramref name="contact"/>.
         /// </summary>
         /// <param name="contact">Contact whose bounces will be deleted.</param>
         /// <param name="errorLog"> Log where errors will be recorded.</param>
         /// <param name="logProgress">Log where progress will be recorded.</param>
-        private void DeleteBounces(ContactInfo contact, StringBuilder errorLog, LogContext logProgress)
+        private void DeleteXperienceBounces(ContactInfo contact, StringBuilder errorLog, LogContext logProgress)
         {
-            // Prevent XSS attack
+            var displayableName = HTMLHelper.HTMLEncode(contact.ContactEmail);
+            using (new CMSActionContext { LogEvents = false })
+            {
+                contact.ContactBounces = 0;
+                contact.Update();
+                AddSuccessLog(logProgress, displayableName);
+            }
+        }
+
+
+        /// <summary>
+        /// Deletes SendGrid bounces for a single contact. Handles logging to event log and to deleting page.
+        /// </summary>
+        /// <param name="contact">Contact whose bounces will be deleted.</param>
+        /// <param name="errorLog"> Log where errors will be recorded.</param>
+        /// <param name="logProgress">Log where progress will be recorded.</param>
+        private void DeleteSendGridBounces(ContactInfo contact, StringBuilder errorLog, LogContext logProgress)
+        {
             var displayableName = HTMLHelper.HTMLEncode(contact.ContactEmail);
             using (new CMSActionContext { LogEvents = false })
             {
@@ -355,7 +376,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         {
             ctlAsyncLog.AddLog(displayableName);
             string deletedMessage = $"Bounces for {displayableName} were deleted.";
-            logProgress.LogEvent(EventType.INFORMATION, nameof(DeleteSendGridBounce), "DeleteBounces", deletedMessage, RequestContext.RawURL, CurrentUser.UserID, CurrentUser.UserName, 0, null, RequestContext.UserHostAddress, SiteContext.CurrentSiteID, SystemContext.MachineName, RequestContext.URLReferrer, RequestContext.UserAgent, DateTime.Now);
+            logProgress.LogEvent(EventType.INFORMATION, nameof(BounceManagementMassAction), "DeleteBounces", deletedMessage, RequestContext.RawURL, CurrentUser.UserID, CurrentUser.UserName,
+                0, null, RequestContext.UserHostAddress, SiteContext.CurrentSiteID, SystemContext.MachineName, RequestContext.URLReferrer, RequestContext.UserAgent, DateTime.Now);
         }
 
 
@@ -372,12 +394,12 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
 
         /// <summary>
-        /// Gets contacts to clear the bounces for.
+        /// Gets the contacts to run the process against.
         /// </summary>
-        private ObjectQuery<ContactInfo> GetContactsToDeleteBounces()
+        private ObjectQuery<ContactInfo> GetSelectedContacts()
         {
             return ContactInfo.Provider.Get()
-                .WhereIn(nameof(ContactInfo.ContactID), ContactIds);
+                .WhereIn(nameof(ContactInfo.ContactID), Parameters.ContactIDs);
         }
 
 
@@ -388,7 +410,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         {
             WindowHelper.Remove(ParametersKey);
 
-            var script = @"wopener." + ReloadScript + "; CloseDialog();";
+            var script = @"wopener." + Parameters.ReloadScript + "; CloseDialog();";
             ScriptHelper.RegisterStartupScript(Page, GetType(), "ReloadGridAndClose", script, addScriptTags: true);
         }
 

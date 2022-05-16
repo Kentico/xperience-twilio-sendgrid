@@ -5,7 +5,6 @@ using EllipticCurve;
 
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 using System.Net.Http;
 
@@ -38,13 +37,14 @@ namespace Kentico.Xperience.Twilio.SendGrid
         public bool VerifySignature()
         {
             var eventLogService = Service.Resolve<IEventLogService>();
+            var appSettingsService = Service.Resolve<IAppSettingsService>();
             if (String.IsNullOrEmpty(payload) || request == null)
             {
                 eventLogService.LogError(nameof(SendGridWebhookValidator), nameof(VerifySignature), "SendGridWebhookValidator parameters are invalid.");
                 return false;
             }
 
-            var webhookKey = ValidationHelper.GetString(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_WEBHOOK_KEY], String.Empty);
+            var webhookKey = ValidationHelper.GetString(appSettingsService[SendGridConstants.APPSETTING_WEBHOOK_KEY], String.Empty);
             if (String.IsNullOrEmpty(webhookKey))
             {
                 eventLogService.LogError(nameof(SendGridWebhookValidator), nameof(VerifySignature), $"Unable to load the {SendGridConstants.APPSETTING_WEBHOOK_KEY} application setting.");

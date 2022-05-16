@@ -1,4 +1,5 @@
-﻿using CMS.ContactManagement;
+﻿using CMS.Base.Web.UI;
+using CMS.ContactManagement;
 using CMS.Core;
 using CMS.DataEngine;
 using CMS.Helpers;
@@ -18,11 +19,19 @@ using System.Linq;
 
 namespace Kentico.Xperience.Twilio.SendGrid.Pages
 {
+    /// <summary>
+    /// An administration UI page which displays subscribers of a newsletter or email campaign issue and allows
+    /// mass actions to be performed on the subscribers.
+    /// </summary>
     public partial class BounceManagement : CMSPage
     {
         private IEnumerable<SendGridBounce> bounceData;
+        private IEnumerable<ContactInfo> subscribedContacts;
 
 
+        /// <summary>
+        /// The newsletter or email campaign issue being displayed in the UI.
+        /// </summary>
         private BaseInfo EditedNewsletterOrIssue
         {
             get
@@ -40,13 +49,18 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             }
         }
 
-
-        protected void Page_Load(object sender, EventArgs e)
+        protected override void OnInit(EventArgs e)
         {
+            base.OnInit(e);
+
+            ScriptHelper.RegisterDialogScript(Page);
+
             LoadBounceData();
             LoadGridData();
+            LoadGridMassActions();
 
             gridReport.OnExternalDataBound += gridReport_OnExternalDataBound;
+            gridReport.DataBind();
         }
 
 
@@ -74,6 +88,9 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         }
 
 
+        /// <summary>
+        /// Loads the list of emails on the SendGrid bounce suppression list.
+        /// </summary>
         private void LoadBounceData()
         {
             var sendGridClient = Service.ResolveOptional<ISendGridClient>();
@@ -111,6 +128,9 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         }
 
 
+        /// <summary>
+        /// Loads the subscribers of the current <see cref="EditedNewsletterOrIssue"/> and binds the UniGrid.
+        /// </summary>
         private void LoadGridData()
         {
             if (gridReport.StopProcessing)
@@ -118,7 +138,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 return;
             }
 
-            InfoDataSet<ContactInfo> subscribedContacts = null;
             if (EditedNewsletterOrIssue is NewsletterInfo)
             {
                 subscribedContacts = LoadNewsletterSubscribers(EditedNewsletterOrIssue as NewsletterInfo);
@@ -128,11 +147,78 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 subscribedContacts = LoadCampaignIssueSubscribers(EditedNewsletterOrIssue as IssueInfo);
             }
 
-            if (subscribedContacts != null)
+            if (subscribedContacts == null)
             {
-                gridReport.DataSource = subscribedContacts;
-                gridReport.DataBind();
+                gridReport.StopProcessing = true;
+                return;
             }
+
+            gridReport.DataSource = subscribedContacts;
+        }
+
+
+        /// <summary>
+        /// Sets the actions of the <see cref="ctrlMassActions"/> control and configures the delegate which stores the
+        /// <see cref="BounceManagementActionParameters"/> in session and generates the proper URL to the modal window.
+        /// </summary>
+        private void LoadGridMassActions()
+        {
+            if (gridReport.StopProcessing)
+            {
+                return;
+            }
+
+            Func<Func<BounceManagementActionParameters, string>, string, string, CreateUrlDelegate> functionConverter = (generateActionFunction, actionName, title) =>
+            {
+                return (scope, selectedNodeIDs, parameters) =>
+                {
+                    var bounceManagementParameters = new BounceManagementActionParameters
+                    {
+                        ActionName = actionName,
+                        Title = title,
+                        ContactIDs = scope == MassActionScopeEnum.AllItems ? subscribedContacts.Select(c => c.ContactID).ToList() : selectedNodeIDs,
+                        ReloadScript = gridReport.GetReloadScript()
+                };
+                    return generateActionFunction(bounceManagementParameters);
+                };
+            };
+
+            ctrlMassActions.SelectedItemsClientID = gridReport.GetSelectionFieldClientID();
+            ctrlMassActions.SelectedItemsResourceString = "Selected subscribers";
+            ctrlMassActions.AllItemsResourceString = "All subscribers";
+            ctrlMassActions.AddMassActions(
+                new MassActionItem
+                {
+                    ActionType = MassActionTypeEnum.OpenModal,
+                    CodeName = "Delete Xperience Bounces",
+                    CreateUrl = functionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_XPERIENCE_BOUNCE, "Delete Xperience Bounces")
+                },
+                new MassActionItem
+                {
+                    ActionType = MassActionTypeEnum.OpenModal,
+                    CodeName = "Delete SendGrid Bounces",
+                    CreateUrl = functionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE, "Delete SendGrid Bounces")
+                }
+            );
+        }
+
+
+        /// <summary>
+        /// Stores the <paramref name="bounceManagementParameters"/> in session and generates the absolute URL
+        /// to the mass action modal window.
+        /// </summary>
+        /// <param name="bounceManagementParameters">Parameters related to the chosen mass action and selected contacts.</param>
+        /// <returns></returns>
+        private string GetMassActionUrl(BounceManagementActionParameters bounceManagementParameters)
+        {
+            var paramsIdentifier = Guid.NewGuid().ToString();
+            WindowHelper.Add(paramsIdentifier, bounceManagementParameters);
+
+            var url = URLHelper.ResolveUrl("~/CMSModules/Kentico.Xperience.Twilio.SendGrid/Pages/BounceManagementMassAction.aspx");
+            url = URLHelper.AddParameterToUrl(url, "parameters", paramsIdentifier);
+            url = URLHelper.AddParameterToUrl(url, "hash", QueryHelper.GetHash(URLHelper.GetQuery(url)));
+
+            return url;
         }
 
 

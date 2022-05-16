@@ -6,6 +6,18 @@
     public class SendGridConstants
     {
         /// <summary>
+        /// UniGrid mass action key for deleting Xperience bounces.
+        /// </summary>
+        public const string ACTION_DELETE_XPERIENCE_BOUNCE = "kx-bounce";
+
+
+        /// <summary>
+        /// UniGrid mass action key for deleting SendGrid bounces.
+        /// </summary>
+        public const string ACTION_DELETE_SENDGRID_BOUNCE = "sg-bounce";
+
+
+        /// <summary>
         /// The API key for using the SendGrid API.
         /// </summary>
         public const string APPSETTING_API_KEY = "SendGridApiKey";

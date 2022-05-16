@@ -2,14 +2,11 @@
 
 <%@ Register Namespace="CMS.UIControls.UniGridConfig" TagPrefix="ug" Assembly="CMS.UIControls" %>
 <%@ Register Tagprefix="cms" Tagname="UniGrid" Src="~/CMSAdminControls/UI/UniGrid/UniGrid.ascx" %>
+<%@ Register TagPrefix="cms" TagName="MassActions" Src="~/CMSAdminControls/UI/UniGrid/Controls/MassActions.ascx" %>
 
 <asp:Content ID="cntBody" runat="server" ContentPlaceHolderID="plcContent">
     <div class="cms-bootstrap" style="margin-top:30px">
         <cms:UniGrid ID="gridReport" runat="server" ShowExportMenu="true" EnableViewState="false" IsLiveSite="false">
-            <GridMassActions>
-                <ug:MassAction Caption="Delete SendGrid bounces" Name="delete-sg" Behavior="OpenModal" Url="~/CMSModules/Kentico.Xperience.Twilio.SendGrid/Pages/DeleteSendGridBounce.aspx" />
-                <ug:MassAction Caption="Delete Xperience bounces" Name="delete-kx" Behavior="OpenModal" Url="~/CMSModules/Kentico.Xperience.Twilio.SendGrid/Pages/DeleteXperienceBounce.aspx" />
-            </GridMassActions>
             <GridColumns>
                 <ug:Column runat="server" Source="ContactEmail" Caption="Email" Wrap="false">
                     <Filter Type="Text" />
@@ -21,5 +18,6 @@
             </GridColumns>
             <GridOptions ShowSelection="true" DisplayFilter="true" />
         </cms:UniGrid>
+        <cms:MassActions ID="ctrlMassActions" runat="server" />
     </div>
 </asp:Content>

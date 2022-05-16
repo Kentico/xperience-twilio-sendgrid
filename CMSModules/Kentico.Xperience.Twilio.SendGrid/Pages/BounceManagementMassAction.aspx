@@ -1,5 +1,5 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="DeleteSendGridBounce.aspx.cs" Inherits="Kentico.Xperience.Twilio.SendGrid.Pages.DeleteSendGridBounce"
-    Theme="Default" MasterPageFile="~/CMSMasterPages/UI/Dialogs/ModalDialogPage.master" Title="Delete" %>
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="BounceManagementMassAction.aspx.cs" Inherits="Kentico.Xperience.Twilio.SendGrid.Pages.BounceManagementMassAction"
+    Theme="Default" MasterPageFile="~/CMSMasterPages/UI/Dialogs/ModalDialogPage.master" Title="Bounce management" %>
 
 <%@ Register Src="~/CMSAdminControls/AsyncLogDialog.ascx" TagName="AsyncLog"
     TagPrefix="cms" %>

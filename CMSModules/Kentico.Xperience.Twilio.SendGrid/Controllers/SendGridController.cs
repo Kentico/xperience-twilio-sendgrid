@@ -70,40 +70,40 @@ namespace Kentico.Xperience.Twilio.SendGrid.Controllers
 
             switch (eventName)
             {
-                case "processed":
-                    SendGridEvents.Process.StartEvent(eventObject);
+                case SendGridEventName.Processed:
+                    SendGridEvents.Processed.StartEvent(eventObject);
                     break;
-                case "dropped":
-                    SendGridEvents.Drop.StartEvent(eventObject);
+                case SendGridEventName.Dropped:
+                    SendGridEvents.Dropped.StartEvent(eventObject);
                     break;
-                case "delivered":
-                    SendGridEvents.Deliver.StartEvent(eventObject);
+                case SendGridEventName.Delivered:
+                    SendGridEvents.Delivered.StartEvent(eventObject);
                     break;
-                case "deferred":
-                    SendGridEvents.Defer.StartEvent(eventObject);
+                case SendGridEventName.Deferred:
+                    SendGridEvents.Deferred.StartEvent(eventObject);
                     break;
-                case "bounce":
+                case SendGridEventName.Bounce:
                     SendGridEvents.Bounce.StartEvent(eventObject);
                     break;
-                case "blocked":
-                    SendGridEvents.Block.StartEvent(eventObject);
+                case SendGridEventName.Blocked:
+                    SendGridEvents.Blocked.StartEvent(eventObject);
                     break;
-                case "open":
+                case SendGridEventName.Open:
                     SendGridEvents.Open.StartEvent(eventObject);
                     break;
-                case "click":
+                case SendGridEventName.Click:
                     SendGridEvents.Click.StartEvent(eventObject);
                     break;
-                case "spamreport":
+                case SendGridEventName.SpamReport:
                     SendGridEvents.SpamReport.StartEvent(eventObject);
                     break;
-                case "unsubscribe":
+                case SendGridEventName.Unsubscribe:
                     SendGridEvents.Unsubscribe.StartEvent(eventObject);
                     break;
-                case "group_unsubscribe":
+                case SendGridEventName.GroupUnsubscribe:
                     SendGridEvents.GroupUnsubscribe.StartEvent(eventObject);
                     break;
-                case "group_resubscribe":
+                case SendGridEventName.GroupResubscribe:
                     SendGridEvents.GroupResubscribe.StartEvent(eventObject);
                     break;
             }

@@ -51,15 +51,14 @@ namespace Kentico.Xperience.Twilio.SendGrid
 
             // Register event handlers
             SendGridEvents.Bounce.After += MarkIssueUndelivered;
-            SendGridEvents.Drop.After += MarkIssueUndelivered;
-            SendGridEvents.Block.After += MarkIssueUndelivered;
+            SendGridEvents.Dropped.After += MarkIssueUndelivered;
+            SendGridEvents.Blocked.After += MarkIssueUndelivered;
         }
 
 
         /// <summary>
         /// Increment a newsletter issue's <see cref="IssueInfo.IssueBounces"/> when an email can't be delivered.
-        /// Also increments a contact's <see cref="ContactInfo.ContactBounces"/> after receiving a SendGrid "bounce"
-        /// event webhook.
+        /// Also increments a contact's <see cref="ContactInfo.ContactBounces"/> after receiving a hard or soft bounce.
         /// </summary>
         private void MarkIssueUndelivered(object sender, SendGridEventArgs e)
         {
@@ -71,7 +70,7 @@ namespace Kentico.Xperience.Twilio.SendGrid
                 issueInfo.Update();
             }
 
-            if (e.SendGridEvent.Event == "bounce")
+            if (e.EventName == SendGridEventName.Bounce || e.EventName == SendGridEventName.Blocked)
             {
                 var contact = ContactInfo.Provider.Get()
                 .TopN(1)

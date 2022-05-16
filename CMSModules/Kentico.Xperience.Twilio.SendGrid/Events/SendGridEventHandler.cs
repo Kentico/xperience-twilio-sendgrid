@@ -17,6 +17,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Events
         {
             var e = new SendGridEventArgs
             {
+                EventName = Name,
                 SendGridEvent = eventObject
             };
             

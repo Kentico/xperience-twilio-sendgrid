@@ -8,7 +8,6 @@ using SendGrid.Helpers.Mail;
 
 using System;
 using System.Collections.Generic;
-using System.Configuration;
 using System.Linq;
 
 [assembly: RegisterImplementation(typeof(ISendGridConfigurationProvider), typeof(DefaultSendGridConfigurationProvider), Lifestyle = Lifestyle.Singleton, Priority = RegistrationPriority.SystemDefault)]
@@ -20,15 +19,27 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
     /// </summary>
     public class DefaultSendGridConfigurationProvider : ISendGridConfigurationProvider
     {
+        private readonly IAppSettingsService appSettingsService;
+
+
+        /// <summary>
+        /// Initializes a new instance of the <see cref="DefaultSendGridConfigurationProvider"/> class.
+        /// </summary>
+        public DefaultSendGridConfigurationProvider(IAppSettingsService appSettingsService)
+        {
+            this.appSettingsService = appSettingsService;
+        }
+
+
         public bool DebugEnabled()
         {
-            return ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_DEBUG], false);
+            return ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_DEBUG], false);
         }
 
 
         public void SetIpPoolName(string siteName, SendGridMessage sendGridMessage)
         {
-            var ipPoolName = ValidationHelper.GetString(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_IP_POOL_NAME], String.Empty);
+            var ipPoolName = ValidationHelper.GetString(appSettingsService[SendGridConstants.APPSETTING_IP_POOL_NAME], String.Empty);
             if (!String.IsNullOrEmpty(ipPoolName))
             {
                 sendGridMessage.IpPoolName = ipPoolName;
@@ -54,14 +65,14 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                 },
                 SandboxMode = new SandboxMode()
                 {
-                    Enable = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_SANDBOX_MODE], false)
+                    Enable = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_SANDBOX_MODE], false)
                 }
             };
 
-            var bypassListManagement = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_BYPASS_GROUPS_SUPPRESSION], false);
-            var bypassSpam = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_BYPASS_SPAM], false);
-            var bypassUnsubscribes = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_BYPASS_GLOBAL_UNSUBSCRIBE], false);
-            var bypassBounces = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_BYPASS_BOUNCE], false);
+            var bypassListManagement = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_BYPASS_GROUPS_SUPPRESSION], false);
+            var bypassSpam = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_BYPASS_SPAM], false);
+            var bypassUnsubscribes = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_BYPASS_GLOBAL_UNSUBSCRIBE], false);
+            var bypassBounces = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_BYPASS_BOUNCE], false);
             var enabledMutuallyExclusiveSettings = new List<bool>
             {
                 bypassListManagement,
@@ -115,19 +126,19 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
             {
                 ClickTracking = new ClickTracking()
                 {
-                    Enable = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_ENABLE_CLICK_TRACKING], false)
+                    Enable = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_ENABLE_CLICK_TRACKING], false)
                 },
                 OpenTracking = new OpenTracking()
                 {
-                    Enable = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_ENABLE_OPEN_TRACKING], false)
+                    Enable = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_ENABLE_OPEN_TRACKING], false)
                 },
                 SubscriptionTracking = new SubscriptionTracking()
                 {
-                    Enable = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_ENABLE_SUBSCRIPTION_TRACKING], false)
+                    Enable = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_ENABLE_SUBSCRIPTION_TRACKING], false)
                 },
                 Ganalytics = new Ganalytics()
                 {
-                    Enable = ValidationHelper.GetBoolean(ConfigurationManager.AppSettings[SendGridConstants.APPSETTING_ENABLE_GANALYTICS], false)
+                    Enable = ValidationHelper.GetBoolean(appSettingsService[SendGridConstants.APPSETTING_ENABLE_GANALYTICS], false)
                 }
             };
 
