@@ -1,9 +1,9 @@
-﻿---
+---
 name: Feedback
 about: Love this integration? Have a complaint? Let us know!
 title: ''
 labels: ''
-assignees: kentico-ericd
+assignees: ''
 
 ---
 
