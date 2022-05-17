@@ -1,4 +1,4 @@
----
+﻿---
 name: Feedback
 about: Love this integration? Have a complaint? Let us know!
 title: ''
@@ -9,7 +9,7 @@ assignees: kentico-ericd
 
 ### How was your experience?
 
-- [ ] Excellent
+- [x] Excellent
 - [ ] Good
 - [ ] Neutral
 - [ ] Bad
