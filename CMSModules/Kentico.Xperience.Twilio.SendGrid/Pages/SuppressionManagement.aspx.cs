@@ -83,7 +83,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                     var bounceLimit = ValidationHelper.GetInteger(settingsService["CMSBouncedEmailsLimit"], 0);
                     var cssClass = contactBounces >= bounceLimit ? "StatusDisabled" : "StatusEnabled";
                     return $"<span class='{cssClass}'>{contactBounces}</span>";
-                    //return UniGridFunctions.ColoredSpanYesNo(contactBounces >= bounceLimit);
             }
 
             return parameter;

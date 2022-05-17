@@ -119,9 +119,9 @@ Within the Xperience __Email marketing__ application you will find a new tab cal
 
 The __Bounced in SendGrid__ column indicates whether the email is listed under SendGrid's __Suppressions → Bounces__ list. The __Bounces in Xperience__ column lists the number of bounces recorded in the Xperience database, and will be red if the number of bounces exceeds the _"Bounced email limit"_ setting in __Settings → On-line marketing → Email marketing__. Using the checkboxes and drop-down menu at the bottom of the grid, you can delete these suppressions to ensure that your emails are delivered to the recipients.
 
-## Contributing
+## Feedback & Contributing
 
-Check out [CONTRIBUTING.md](/CONTRIBUTING.md) to see the best places to file issues, start discussions, and begin contributing.
+Did you find a bug, have a feature request, or just want to let us know how we're doing? Create a new [GitHub Issue](https://github.com/Kentico/xperience-twilio-sendgrid/issues/new/choose) and tell us about it! If you'd like to contribute to the project, check out [CONTRIBUTING.md](/CONTRIBUTING.md) to get started.
 
 ## License
 
