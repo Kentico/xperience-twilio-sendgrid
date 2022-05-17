@@ -22,14 +22,14 @@ using System.Web.UI;
 namespace Kentico.Xperience.Twilio.SendGrid.Pages
 {
     /// <summary>
-    /// A modal dialog which performs a mass action from the SendGrid "Bounce management" UI.
+    /// A modal dialog which performs a mass action from the SendGrid "Suppressions" UI.
     /// </summary>
-    public partial class BounceManagementMassAction : CMSAdministrationPage, ICallbackEventHandler
+    public partial class SuppressionManagementMassAction : CMSAdministrationPage, ICallbackEventHandler
     {
         private const int SHOWN_RECORDS_NUMBER = 500;
         private IEventLogService eventLogService;
         private ISendGridClient sendGridClient;
-        private BounceManagementActionParameters mParameters;
+        private SuppressionManagementActionParameters mParameters;
         private string mParametersKey;
 
 
@@ -52,11 +52,11 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// <summary>
         /// The parameters of the chosen mass action.
         /// </summary>
-        private BounceManagementActionParameters Parameters
+        private SuppressionManagementActionParameters Parameters
         {
             get
             {
-                return mParameters ?? (mParameters = WindowHelper.GetItem(ParametersKey) as BounceManagementActionParameters);
+                return mParameters ?? (mParameters = WindowHelper.GetItem(ParametersKey) as SuppressionManagementActionParameters);
             }
         }
 
@@ -219,7 +219,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// </summary>
         private void HandleInvalidParameters(string eventDescription)
         {
-            eventLogService.LogError(nameof(BounceManagementMassAction), nameof(HandleInvalidParameters), eventDescription);
+            eventLogService.LogError(nameof(SuppressionManagementMassAction), nameof(HandleInvalidParameters), eventDescription);
             RedirectToInformation("The requirements for the chosen action are invalid, please check the Event Log.");
         }
 
@@ -376,7 +376,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         {
             ctlAsyncLog.AddLog(displayableName);
             string deletedMessage = $"Bounces for {displayableName} were deleted.";
-            logProgress.LogEvent(EventType.INFORMATION, nameof(BounceManagementMassAction), "DeleteBounces", deletedMessage, RequestContext.RawURL, CurrentUser.UserID, CurrentUser.UserName,
+            logProgress.LogEvent(EventType.INFORMATION, nameof(SuppressionManagementMassAction), "DeleteBounces", deletedMessage, RequestContext.RawURL, CurrentUser.UserID, CurrentUser.UserName,
                 0, null, RequestContext.UserHostAddress, SiteContext.CurrentSiteID, SystemContext.MachineName, RequestContext.URLReferrer, RequestContext.UserAgent, DateTime.Now);
         }
 

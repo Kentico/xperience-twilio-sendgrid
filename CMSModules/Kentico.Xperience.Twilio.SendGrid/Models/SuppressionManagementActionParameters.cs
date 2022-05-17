@@ -6,9 +6,9 @@ namespace Kentico.Xperience.Twilio.SendGrid.Models
 {
     /// <summary>
     /// Parameters that are stored in session and retrieved when performing a mass action
-    /// with <see cref="BounceManagementMassAction"/>.
+    /// with <see cref="SuppressionManagementMassAction"/>.
     /// </summary>
-    public class BounceManagementActionParameters
+    public class SuppressionManagementActionParameters
     {
         /// <summary>
         /// The name of the action being performed.

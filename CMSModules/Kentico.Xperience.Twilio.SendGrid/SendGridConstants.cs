@@ -121,5 +121,11 @@
         /// The key of the header storing the SendGrid webhook timestamp.
         /// </summary>
         public const string HEADER_WEBHOOK_TIMESTAMP = "X-Twilio-Email-Event-Webhook-Timestamp";
+
+
+        /// <summary>
+        /// The virtual URL of the suppression management mass action modal window.
+        /// </summary>
+        public const string URL_SUPPRESSION_MASSACTION = "~/CMSModules/Kentico.Xperience.Twilio.SendGrid/Pages/SuppressionManagementMassAction.aspx";
     }
 }

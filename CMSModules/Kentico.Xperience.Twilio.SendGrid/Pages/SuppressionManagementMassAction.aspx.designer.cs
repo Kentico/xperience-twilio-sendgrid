@@ -11,7 +11,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 {
 
 
-    public partial class BounceManagementMassAction
+    public partial class SuppressionManagementMassAction
     {
 
         /// <summary>

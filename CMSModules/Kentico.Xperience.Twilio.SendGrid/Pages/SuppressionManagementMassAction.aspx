@@ -1,4 +1,4 @@
-﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="BounceManagementMassAction.aspx.cs" Inherits="Kentico.Xperience.Twilio.SendGrid.Pages.BounceManagementMassAction"
+﻿<%@ Page Language="C#" AutoEventWireup="true" CodeBehind="SuppressionManagementMassAction.aspx.cs" Inherits="Kentico.Xperience.Twilio.SendGrid.Pages.SuppressionManagementMassAction"
     Theme="Default" MasterPageFile="~/CMSMasterPages/UI/Dialogs/ModalDialogPage.master" Title="Bounce management" %>
 
 <%@ Register Src="~/CMSAdminControls/AsyncLogDialog.ascx" TagName="AsyncLog"

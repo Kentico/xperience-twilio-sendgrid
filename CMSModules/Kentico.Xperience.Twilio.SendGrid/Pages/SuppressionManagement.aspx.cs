@@ -23,7 +23,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
     /// An administration UI page which displays subscribers of a newsletter or email campaign issue and allows
     /// mass actions to be performed on the subscribers.
     /// </summary>
-    public partial class BounceManagement : CMSPage
+    public partial class SuppressionManagement : CMSPage
     {
         private IEnumerable<SendGridBounce> bounceData;
         private IEnumerable<ContactInfo> subscribedContacts;
@@ -81,7 +81,9 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                     var settingsService = Service.Resolve<ISettingsService>();
                     var contactBounces = ValidationHelper.GetInteger(drv[nameof(ContactInfo.ContactBounces)], 0);
                     var bounceLimit = ValidationHelper.GetInteger(settingsService["CMSBouncedEmailsLimit"], 0);
-                    return UniGridFunctions.ColoredSpanYesNo(contactBounces >= bounceLimit);
+                    var cssClass = contactBounces >= bounceLimit ? "StatusDisabled" : "StatusEnabled";
+                    return $"<span class='{cssClass}'>{contactBounces}</span>";
+                    //return UniGridFunctions.ColoredSpanYesNo(contactBounces >= bounceLimit);
             }
 
             return parameter;
@@ -123,7 +125,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             var logDescription = $"Unable to load bounces from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
             var eventLogService = Service.Resolve<IEventLogService>();
 
-            eventLogService.LogError(nameof(BounceManagement), nameof(LoadBounceData), logDescription);
+            eventLogService.LogError(nameof(SuppressionManagement), nameof(LoadBounceData), logDescription);
             ShowError("Unable to load bounces from SendGrid. Please check the Event Log.");
         }
 
@@ -159,7 +161,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
         /// <summary>
         /// Sets the actions of the <see cref="ctrlMassActions"/> control and configures the delegate which stores the
-        /// <see cref="BounceManagementActionParameters"/> in session and generates the proper URL to the modal window.
+        /// <see cref="SuppressionManagementActionParameters"/> in session and generates the proper URL to the modal window.
         /// </summary>
         private void LoadGridMassActions()
         {
@@ -168,18 +170,18 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 return;
             }
 
-            Func<Func<BounceManagementActionParameters, string>, string, string, CreateUrlDelegate> functionConverter = (generateActionFunction, actionName, title) =>
+            Func<Func<SuppressionManagementActionParameters, string>, string, string, CreateUrlDelegate> functionConverter = (generateActionFunction, actionName, title) =>
             {
                 return (scope, selectedNodeIDs, parameters) =>
                 {
-                    var bounceManagementParameters = new BounceManagementActionParameters
+                    var suppressionManagementParameters = new SuppressionManagementActionParameters
                     {
                         ActionName = actionName,
                         Title = title,
                         ContactIDs = scope == MassActionScopeEnum.AllItems ? subscribedContacts.Select(c => c.ContactID).ToList() : selectedNodeIDs,
                         ReloadScript = gridReport.GetReloadScript()
                 };
-                    return generateActionFunction(bounceManagementParameters);
+                    return generateActionFunction(suppressionManagementParameters);
                 };
             };
 
@@ -204,17 +206,17 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
 
         /// <summary>
-        /// Stores the <paramref name="bounceManagementParameters"/> in session and generates the absolute URL
+        /// Stores the <paramref name="suppressionManagementParameters"/> in session and generates the absolute URL
         /// to the mass action modal window.
         /// </summary>
-        /// <param name="bounceManagementParameters">Parameters related to the chosen mass action and selected contacts.</param>
+        /// <param name="suppressionManagementParameters">Parameters related to the chosen mass action and selected contacts.</param>
         /// <returns></returns>
-        private string GetMassActionUrl(BounceManagementActionParameters bounceManagementParameters)
+        private string GetMassActionUrl(SuppressionManagementActionParameters suppressionManagementParameters)
         {
             var paramsIdentifier = Guid.NewGuid().ToString();
-            WindowHelper.Add(paramsIdentifier, bounceManagementParameters);
+            WindowHelper.Add(paramsIdentifier, suppressionManagementParameters);
 
-            var url = URLHelper.ResolveUrl("~/CMSModules/Kentico.Xperience.Twilio.SendGrid/Pages/BounceManagementMassAction.aspx");
+            var url = URLHelper.ResolveUrl(SendGridConstants.URL_SUPPRESSION_MASSACTION);
             url = URLHelper.AddParameterToUrl(url, "parameters", paramsIdentifier);
             url = URLHelper.AddParameterToUrl(url, "hash", QueryHelper.GetHash(URLHelper.GetQuery(url)));
 

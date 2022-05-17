@@ -97,28 +97,31 @@ This could be helpful if, for example, you want to use a different IP Pool for e
 
 ## SendGrid Event Webhooks
 
-SendGrid has the ability to send webhooks to your Xperience administration website when [certain events](https://docs.sendgrid.com/for-developers/tracking-events/event#delivery-events) occur. Within this integration, you can automatically increase an Xperience contact's bounces when a SendGrid email bounces, and a marketing email's __Delivery rate__ will be correctly adjusted when a "drop" event occurs. To enable this functionality, you must [enable SendGrid Event Webhooks](#enable-sendgrid-event-webhooks).
+SendGrid has the ability to send webhooks to your Xperience administration website when [certain events](https://docs.sendgrid.com/for-developers/tracking-events/event#delivery-events) occur. Within this integration, you can automatically increase an Xperience contact's bounces when a SendGrid email bounces, and a marketing email's __Delivery rate__ will be correctly adjusted when certain events occurs. To enable this functionality, you must [enable SendGrid Event Webhooks](#enable-sendgrid-event-webhooks).
+
+> :warning: When a delayed bounce occurs, the Xperience email headers are lost and the email cannot be associated with the newsletter or email campaign. In these rare cases, the __Delivery rate__ will not be 100% accurate.
 
 SendGrid event handling is implemented via standard [Xperience event handling](https://docs.xperience.io/custom-development/handling-global-events), using custom handlers created for this integration:
 
 ```cs
-SendGridEvents.Bounce.After += LogContactBounce;
-SendGridEvents.Drop.After += MarkIssueUndelivered;
+SendGridEvents.Bounce.After += MarkIssueUndelivered;
+SendGridEvents.Dropped.After += MarkIssueUndelivered;
+SendGridEvents.Blocked.After += MarkIssueUndelivered;
 ```
 
 You can view the available events in the [`SendGridEvents`](CMSModules/Kentico.Xperience.Twilio.SendGrid/Events/SendGridEvents.cs) class. If you wish to handle any of these events, you must ensure that the SendGrid Event Webhook is enabled, as described in __step #2__ of [Enable SendGrid Event Webhooks](#enable-sendgrid-event-webhooks).
 
-## Bounce management
+## Suppression management
 
-Within the Xperience __Email marketing__ application you will find a new tab called _"Bounce management:"_
+Within the Xperience __Email marketing__ application you will find a new tab called _"Suppressions."_ This interface allows you to manage Xperience and SendGrid email suppressions for subscribers of the newsletter or email campaign. For newsletters, the tab can be found when editing the newsletter. For email campaigns, it appears when editing an individual email of the campaign.
 
-![bounce-management-img]
+![suppressions-img]
 
-This interface allows you to remove an email address from SendGrid's __Suppressions → Bounces__ list, and you can clear the number of bounces for an Xperience contact. For newsletters, the tab can be found when editing the newsletter. For email campaigns, it appears when editing an individual email of the campaign.
+The __Bounced in SendGrid__ column indicates whether the email is listed under SendGrid's __Suppressions → Bounces__ list. The __Bounces in Xperience__ column lists the number of bounces recorded in the Xperience database, and will be red if the number of bounces exceeds the _"Bounced email limit"_ setting in __Settings → On-line marketing → Email marketing__. Using the checkboxes and drop-down menu at the bottom of the grid, you can delete these suppressions to ensure that your emails are delivered to the recipients.
 
 ## Contributing
 
-For Contributing please see [CONTRIBUTING.md](CONTRIBUTING.md) for more information.
+Check out [CONTRIBUTING.md](/CONTRIBUTING.md) to see the best places to file issues, start discussions, and begin contributing.
 
 ## License
 
@@ -128,4 +131,4 @@ Distributed under the MIT License. See [LICENSE.md](LICENSE.md) for more informa
 [stackoverflow-url]: https://stackoverflow.com/tags/kentico
 [xperience-shield]: https://img.shields.io/badge/Kentico.Xperience.Libraries-v13.0.0-orange
 [xperience-url]: https://www.nuget.org/packages/Kentico.Xperience.Libraries
-[bounce-management-img]: /Assets/bounce-management.png
+[suppressions-img]: /Assets/suppressions.png
