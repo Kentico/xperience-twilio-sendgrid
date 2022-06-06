@@ -14,7 +14,7 @@
                 </ug:Column>
                 <ug:Column runat="server" Source="ContactID" Caption="Name" ExternalSourceName="#transform: om.contact: {%ContactDescriptiveName%}" Wrap="false" />
                 <ug:Column runat="server" Source="ContactEmail" Caption="Bounced in SendGrid" ExternalSourceName="sg-bounced" Wrap="false" AllowSorting="false" />
-                <ug:Column runat="server" Source="##ALL##" Caption="Bounces in Xperience" ExternalSourceName="kx-bounced" Wrap="false" AllowSorting="false" />
+                <ug:Column runat="server" Source="ContactBounces" Caption="Bounces in Xperience" ExternalSourceName="kx-bounced" Wrap="false" AllowSorting="false" />
                 <ug:Column runat="server" CssClass="filling-column" />
             </GridColumns>
             <GridOptions ShowSelection="true" DisplayFilter="true" />

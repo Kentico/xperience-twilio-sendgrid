@@ -77,9 +77,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                     var email = ValidationHelper.GetString(parameter, String.Empty);
                     return UniGridFunctions.ColoredSpanYesNo(bounceData.Any(b => b.Email == email));
                 case "kx-bounced":
-                    var drv = parameter as DataRowView;
                     var settingsService = Service.Resolve<ISettingsService>();
-                    var contactBounces = ValidationHelper.GetInteger(drv[nameof(ContactInfo.ContactBounces)], 0);
+                    var contactBounces = ValidationHelper.GetInteger(parameter, 0);
                     var bounceLimit = ValidationHelper.GetInteger(settingsService["CMSBouncedEmailsLimit"], 0);
                     var cssClass = contactBounces >= bounceLimit ? "StatusDisabled" : "StatusEnabled";
                     return $"<span class='{cssClass}'>{contactBounces}</span>";
@@ -94,19 +93,27 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// </summary>
         private void LoadBounceData()
         {
-            var sendGridClient = Service.ResolveOptional<ISendGridClient>();
-            if (sendGridClient == null)
+            var cachedResponse = CacheHelper.Cache((cs) => {
+                var sendGridClient = Service.ResolveOptional<ISendGridClient>();
+                if (sendGridClient == null)
+                {
+                    return null;
+                }
+
+                return sendGridClient.RequestAsync(
+                    method: BaseClient.Method.GET,
+                    urlPath: "suppression/bounces"
+                ).ConfigureAwait(false).GetAwaiter().GetResult();
+            }, new CacheSettings(20, SendGridConstants.CACHE_KEY_BOUNCES));
+
+            if (cachedResponse == null)
             {
                 ShowError("The SendGrid client is not configured properly.");
                 return;
             }
 
-            var response = sendGridClient.RequestAsync(
-                method: BaseClient.Method.GET,
-                urlPath: "suppression/bounces"
-            ).ConfigureAwait(false).GetAwaiter().GetResult();
-            var responseBody = response.Body.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (response.IsSuccessStatusCode)
+            var responseBody = cachedResponse.Body.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+            if (cachedResponse.IsSuccessStatusCode)
             {
                 bounceData = JsonConvert.DeserializeObject<IEnumerable<SendGridBounce>>(responseBody);
                 return;
@@ -225,7 +232,9 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
         private InfoDataSet<ContactInfo> LoadCampaignIssueSubscribers(IssueInfo issue)
         {
-            var contactsWithEmail = ContactInfo.Provider.Get().WhereNotEmpty(nameof(ContactInfo.ContactEmail));
+            var contactsWithEmail = ContactInfo.Provider.Get()
+                .WhereNotEmpty(nameof(ContactInfo.ContactEmail))
+                .Columns(nameof(ContactInfo.ContactID), nameof(ContactInfo.ContactEmail), nameof(ContactInfo.ContactBounces));
             var contactGroupIds = IssueContactGroupInfo.Provider.Get()
                 .Column(nameof(IssueContactGroupInfo.ContactGroupID))
                 .WhereEquals(nameof(IssueContactGroupInfo.IssueID), issue.IssueID);
@@ -241,7 +250,9 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
         private InfoDataSet<ContactInfo> LoadNewsletterSubscribers(NewsletterInfo newsletter)
         {
-            var contactsWithEmail = ContactInfo.Provider.Get().WhereNotEmpty(nameof(ContactInfo.ContactEmail));
+            var contactsWithEmail = ContactInfo.Provider.Get()
+                .WhereNotEmpty(nameof(ContactInfo.ContactEmail))
+                .Columns(nameof(ContactInfo.ContactID), nameof(ContactInfo.ContactEmail), nameof(ContactInfo.ContactBounces));
             var contactSubscriberIds = GetNewsletterContactSubscriberIds(newsletter.NewsletterID);
             var contactGroupMemberIds = GetNewsletterContactGroupMemberIds(newsletter.NewsletterID);
 

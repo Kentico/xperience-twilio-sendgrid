@@ -307,6 +307,11 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                     });
             }
 
+            if (Parameters.ActionName == SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE)
+            {
+                CacheHelper.Remove(SendGridConstants.CACHE_KEY_BOUNCES);
+            }
+
             if (errorLog.Length != 0)
             {
                 CurrentError = errorLog.ToString();

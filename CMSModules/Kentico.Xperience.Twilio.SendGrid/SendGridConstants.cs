@@ -112,6 +112,12 @@
 
 
         /// <summary>
+        /// The cache key used to store the response from SendGrid's Bounce API listing.
+        /// </summary>
+        public const string CACHE_KEY_BOUNCES = "SendGrid|API|Bounces";
+
+
+        /// <summary>
         /// The key of the header storing the SendGrid webhook signature.
         /// </summary>
         public const string HEADER_WEBHOOK_SIGNATURE = "X-Twilio-Email-Event-Webhook-Signature";

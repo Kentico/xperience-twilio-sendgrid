@@ -149,10 +149,11 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
         {
             foreach (var attachment in mailMessage.Attachments)
             {
+                var disposition = attachment.ContentDisposition.Inline && mailMessage.IsBodyHtml ? "inline" : "attachment";
                 var data = ConvertAttachmentToBase64(attachment.ContentStream);
                 if (!String.IsNullOrEmpty(data))
                 {
-                    sendGridMessage.AddAttachment(attachment.Name, data, attachment.ContentType.MediaType);
+                    sendGridMessage.AddAttachment(attachment.Name, data, attachment.ContentType.MediaType, disposition, attachment.ContentId);
                 }
             }
         }
