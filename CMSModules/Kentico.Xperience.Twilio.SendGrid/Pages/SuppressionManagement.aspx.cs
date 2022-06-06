@@ -4,6 +4,7 @@ using CMS.Core;
 using CMS.DataEngine;
 using CMS.Helpers;
 using CMS.Newsletters;
+using CMS.Newsletters.Web.UI;
 using CMS.UIControls;
 
 using Kentico.Xperience.Twilio.SendGrid.Models;
@@ -23,7 +24,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
     /// An administration UI page which displays subscribers of a newsletter or email campaign issue and allows
     /// mass actions to be performed on the subscribers.
     /// </summary>
-    public partial class SuppressionManagement : CMSPage
+    public partial class SuppressionManagement : CMSNewsletterPage
     {
         private IEnumerable<SendGridBounce> bounceData;
         private IEnumerable<ContactInfo> subscribedContacts;
@@ -198,14 +199,14 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 new MassActionItem
                 {
                     ActionType = MassActionTypeEnum.OpenModal,
-                    CodeName = "Delete Xperience Bounces",
-                    CreateUrl = functionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_XPERIENCE_BOUNCE, "Delete Xperience Bounces")
+                    CodeName = "Reset Xperience Bounces",
+                    CreateUrl = functionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_XPERIENCE_BOUNCE, "Reset Xperience Bounces")
                 },
                 new MassActionItem
                 {
                     ActionType = MassActionTypeEnum.OpenModal,
-                    CodeName = "Delete SendGrid Bounces",
-                    CreateUrl = functionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE, "Delete SendGrid Bounces")
+                    CodeName = "Reset SendGrid Bounces",
+                    CreateUrl = functionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE, "Reset SendGrid Bounces")
                 }
             );
         }

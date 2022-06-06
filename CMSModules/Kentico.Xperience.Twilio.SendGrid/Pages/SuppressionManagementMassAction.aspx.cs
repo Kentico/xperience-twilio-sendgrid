@@ -295,6 +295,11 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 GetSelectedContacts()
                     .ForEachObject(contact =>
                     {
+                        if (!contact.CheckPermissions(PermissionsEnum.Read, CurrentSiteName, CurrentUser))
+                        {
+                            return;
+                        }
+
                         switch (Parameters.ActionName)
                         {
                             case SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE:
@@ -367,7 +372,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                     return;
                 }
 
-                AddErrorLog(errorLog, $"Couldn't delete bounces for {contact.ContactEmail}.");
+                AddErrorLog(errorLog, $"Couldn't reset bounces for {contact.ContactEmail}.");
             }
         }
 
@@ -380,7 +385,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         private void AddSuccessLog(LogContext logProgress, string displayableName)
         {
             ctlAsyncLog.AddLog(displayableName);
-            string deletedMessage = $"Bounces for {displayableName} were deleted.";
+            string deletedMessage = $"Bounces for {displayableName} were reset.";
             logProgress.LogEvent(EventType.INFORMATION, nameof(SuppressionManagementMassAction), "DeleteBounces", deletedMessage, RequestContext.RawURL, CurrentUser.UserID, CurrentUser.UserName,
                 0, null, RequestContext.UserHostAddress, SiteContext.CurrentSiteID, SystemContext.MachineName, RequestContext.URLReferrer, RequestContext.UserAgent, DateTime.Now);
         }
