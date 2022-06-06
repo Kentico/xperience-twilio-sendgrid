@@ -61,7 +61,68 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
             LoadGridMassActions();
 
             gridReport.OnExternalDataBound += gridReport_OnExternalDataBound;
+            gridReport.OnBeforeFiltering += gridReport_OnBeforeFiltering;
             gridReport.DataBind();
+        }
+
+
+        /// <summary>
+        /// Applies filtering to the dynamic data set using standard UniGrid filters.
+        /// </summary>
+        private string gridReport_OnBeforeFiltering(string whereCondition)
+        {
+            var gridData = gridReport.DataSource as InfoDataSet<ContactInfo>;
+            
+            // ContactEmail filters
+            var emailFilter = ValidationHelper.GetString(gridReport.FilterFormData.GetValue("ContactEmail"), String.Empty).ToLower();
+            var emailOperatorValue = ValidationHelper.GetString(gridReport.FilterFormData.GetValue("ContactEmailOperator"), String.Empty);
+            var emailOperatorEnum = (TextCompareOperatorEnum)Enum.Parse(typeof(TextCompareOperatorEnum), emailOperatorValue);
+            if (!String.IsNullOrEmpty(emailFilter) ||
+                emailOperatorEnum == TextCompareOperatorEnum.Empty ||
+                emailOperatorEnum == TextCompareOperatorEnum.NotEmpty)
+            {
+                IEnumerable<ContactInfo> filteredContacts = null;
+                switch (emailOperatorEnum)
+                {
+                    case TextCompareOperatorEnum.Like:
+                        filteredContacts = gridData.Where(c => c.ContactEmail.ToLower().Contains(emailFilter));
+                        break;
+                    case TextCompareOperatorEnum.NotLike:
+                        filteredContacts = gridData.Where(c => !c.ContactEmail.ToLower().Contains(emailFilter));
+                        break;
+                    case TextCompareOperatorEnum.EndsWith:
+                        filteredContacts = gridData.Where(c => c.ContactEmail.ToLower().EndsWith(emailFilter));
+                        break;
+                    case TextCompareOperatorEnum.NotEndsWith:
+                        filteredContacts = gridData.Where(c => !c.ContactEmail.ToLower().EndsWith(emailFilter));
+                        break;
+                    case TextCompareOperatorEnum.StartsWith:
+                        filteredContacts = gridData.Where(c => c.ContactEmail.ToLower().StartsWith(emailFilter));
+                        break;
+                    case TextCompareOperatorEnum.NotStartsWith:
+                        filteredContacts = gridData.Where(c => !c.ContactEmail.ToLower().StartsWith(emailFilter));
+                        break;
+                    case TextCompareOperatorEnum.Equals:
+                        filteredContacts = gridData.Where(c => c.ContactEmail.Equals(emailFilter, StringComparison.InvariantCultureIgnoreCase));
+                        break;
+                    case TextCompareOperatorEnum.NotEquals:
+                        filteredContacts = gridData.Where(c => !c.ContactEmail.Equals(emailFilter, StringComparison.InvariantCultureIgnoreCase));
+                        break;
+                    case TextCompareOperatorEnum.Empty:
+                        filteredContacts = gridData.Where(c => String.IsNullOrEmpty(c.ContactEmail));
+                        break;
+                    case TextCompareOperatorEnum.NotEmpty:
+                        filteredContacts = gridData.Where(c => !String.IsNullOrEmpty(c.ContactEmail));
+                        break;
+                }
+
+                if (filteredContacts != null)
+                {
+                    gridReport.DataSource = new InfoDataSet<ContactInfo>(filteredContacts.ToArray());
+                }
+            }
+
+            return String.Empty;
         }
 
 
