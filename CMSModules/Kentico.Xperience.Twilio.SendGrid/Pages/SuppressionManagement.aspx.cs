@@ -27,7 +27,25 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
     public partial class SuppressionManagement : CMSNewsletterPage
     {
         private IEnumerable<SendGridBounce> bounceData;
-        private IEnumerable<ContactInfo> subscribedContacts;
+        private int? mBounceLimit;
+        private BaseInfo mEditedNewsletterOrIssue;
+
+
+        /// <summary>
+        /// The email marketing bounce limit value.
+        /// </summary>
+        private int? BounceLimit
+        {
+            get
+            {
+                if (mBounceLimit == null)
+                {
+                    mBounceLimit = NewsletterHelper.BouncedEmailsLimit(CurrentSiteName);
+                }
+
+                return mBounceLimit;
+            }
+        }
 
 
         /// <summary>
@@ -37,18 +55,62 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         {
             get
             {
-                var objectId = QueryHelper.GetInteger("objectid", 0);
-                var parentId = QueryHelper.GetInteger("parentobjectid", 0);
-                if (parentId > 0)
+                if (mEditedNewsletterOrIssue == null)
                 {
-                    // We are editing an issue of a campaign
-                    return IssueInfo.Provider.Get(objectId);
+                    var objectId = QueryHelper.GetInteger("objectid", 0);
+                    var parentId = QueryHelper.GetInteger("parentobjectid", 0);
+                    if (parentId > 0)
+                    {
+                        // We are editing an issue of a campaign
+                        mEditedNewsletterOrIssue = IssueInfo.Provider.Get(objectId);
+                    }
+                    else
+                    {
+                        // We are editing a newsletter
+                        mEditedNewsletterOrIssue = NewsletterInfo.Provider.Get(objectId);
+                    }
                 }
-                
-                // We are editing a newsletter
-                return NewsletterInfo.Provider.Get(objectId);
+
+                return mEditedNewsletterOrIssue;
             }
         }
+
+
+        /// <summary>
+        /// The function that is used to generate the <see cref="MassActionItem.CreateUrl"/> delegate for mass actions.
+        /// </summary>
+        private Func<Func<SuppressionManagementActionParameters, string>, string, string, CreateUrlDelegate> FunctionConverter
+        {
+            get
+            {
+                return (generateActionFunction, actionName, title) =>
+                {
+                    return (scope, selectedNodeIDs, parameters) =>
+                    {
+                        List<int> contactIds = new List<int>();
+                        switch (scope)
+                        {
+                            case MassActionScopeEnum.AllItems:
+                                contactIds.AddRange(GetSubscribers(gridReport.GetFilter()).Select(c => c.ContactID).ToList());
+                                break;
+                            case MassActionScopeEnum.SelectedItems:
+                                contactIds.AddRange(selectedNodeIDs);
+                                break;
+                        }
+
+                        var suppressionManagementParameters = new SuppressionManagementActionParameters
+                        {
+                            ActionName = actionName,
+                            Title = title,
+                            ContactIDs = contactIds,
+                            ReloadScript = gridReport.GetReloadScript()
+                        };
+                        return generateActionFunction(suppressionManagementParameters);
+                    };
+                };
+            }
+        }
+
 
         protected override void OnInit(EventArgs e)
         {
@@ -56,73 +118,48 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
             ScriptHelper.RegisterDialogScript(Page);
 
-            LoadBounceData();
-            LoadGridData();
-            LoadGridMassActions();
+            bounceData = GetBounceData();
+            if (bounceData == null)
+            {
+                gridReport.StopProcessing = true;
+                ctrlMassActions.Visible = false;
+                ctrlMassActions.StopProcessing = true;
+                return;
+            }
 
+            LoadGridMassActions();
+            gridReport.OnDataReload += gridReport_OnDataReload;
             gridReport.OnExternalDataBound += gridReport_OnExternalDataBound;
-            gridReport.OnBeforeFiltering += gridReport_OnBeforeFiltering;
-            gridReport.DataBind();
         }
 
 
         /// <summary>
-        /// Applies filtering to the dynamic data set using standard UniGrid filters.
+        /// Returns the subscribers of the current <see cref="EditedNewsletterOrIssue"/>.
         /// </summary>
-        private string gridReport_OnBeforeFiltering(string whereCondition)
+        private DataSet gridReport_OnDataReload(string completeWhere, string currentOrder, int currentTopN, string columns, int currentOffset, int currentPageSize, ref int totalRecords)
         {
-            var gridData = gridReport.DataSource as InfoDataSet<ContactInfo>;
-            
-            // ContactEmail filters
-            var emailFilter = ValidationHelper.GetString(gridReport.FilterFormData.GetValue("ContactEmail"), String.Empty).ToLower();
-            var emailOperatorValue = ValidationHelper.GetString(gridReport.FilterFormData.GetValue("ContactEmailOperator"), String.Empty);
-            var emailOperatorEnum = (TextCompareOperatorEnum)Enum.Parse(typeof(TextCompareOperatorEnum), emailOperatorValue);
-            if (!String.IsNullOrEmpty(emailFilter) ||
-                emailOperatorEnum == TextCompareOperatorEnum.Empty ||
-                emailOperatorEnum == TextCompareOperatorEnum.NotEmpty)
+            if (gridReport.StopProcessing)
             {
-                IEnumerable<ContactInfo> filteredContacts = null;
-                switch (emailOperatorEnum)
-                {
-                    case TextCompareOperatorEnum.Like:
-                        filteredContacts = gridData.Where(c => c.ContactEmail.ToLower().Contains(emailFilter));
-                        break;
-                    case TextCompareOperatorEnum.NotLike:
-                        filteredContacts = gridData.Where(c => !c.ContactEmail.ToLower().Contains(emailFilter));
-                        break;
-                    case TextCompareOperatorEnum.EndsWith:
-                        filteredContacts = gridData.Where(c => c.ContactEmail.ToLower().EndsWith(emailFilter));
-                        break;
-                    case TextCompareOperatorEnum.NotEndsWith:
-                        filteredContacts = gridData.Where(c => !c.ContactEmail.ToLower().EndsWith(emailFilter));
-                        break;
-                    case TextCompareOperatorEnum.StartsWith:
-                        filteredContacts = gridData.Where(c => c.ContactEmail.ToLower().StartsWith(emailFilter));
-                        break;
-                    case TextCompareOperatorEnum.NotStartsWith:
-                        filteredContacts = gridData.Where(c => !c.ContactEmail.ToLower().StartsWith(emailFilter));
-                        break;
-                    case TextCompareOperatorEnum.Equals:
-                        filteredContacts = gridData.Where(c => c.ContactEmail.Equals(emailFilter, StringComparison.InvariantCultureIgnoreCase));
-                        break;
-                    case TextCompareOperatorEnum.NotEquals:
-                        filteredContacts = gridData.Where(c => !c.ContactEmail.Equals(emailFilter, StringComparison.InvariantCultureIgnoreCase));
-                        break;
-                    case TextCompareOperatorEnum.Empty:
-                        filteredContacts = gridData.Where(c => String.IsNullOrEmpty(c.ContactEmail));
-                        break;
-                    case TextCompareOperatorEnum.NotEmpty:
-                        filteredContacts = gridData.Where(c => !String.IsNullOrEmpty(c.ContactEmail));
-                        break;
-                }
-
-                if (filteredContacts != null)
-                {
-                    gridReport.DataSource = new InfoDataSet<ContactInfo>(filteredContacts.ToArray());
-                }
+                return new DataSet();
             }
 
-            return String.Empty;
+            var query = GetSubscribers(gridReport.GetFilter());
+            if (query == null)
+            {
+                return new DataSet();
+            }
+
+            query = query.Where(completeWhere)
+                .OrderBy(currentOrder)
+                .TopN(currentTopN)
+                .Columns(columns);
+
+            query.MaxRecords = currentPageSize;
+            query.Offset = currentOffset;
+
+            totalRecords = query.TotalRecords;
+
+            return query.Result;
         }
 
 
@@ -139,10 +176,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                     var email = ValidationHelper.GetString(parameter, String.Empty);
                     return UniGridFunctions.ColoredSpanYesNo(bounceData.Any(b => b.Email == email));
                 case "kx-bounced":
-                    var settingsService = Service.Resolve<ISettingsService>();
                     var contactBounces = ValidationHelper.GetInteger(parameter, 0);
-                    var bounceLimit = ValidationHelper.GetInteger(settingsService["CMSBouncedEmailsLimit"], 0);
-                    var cssClass = contactBounces >= bounceLimit ? "StatusDisabled" : "StatusEnabled";
+                    var cssClass = contactBounces >= BounceLimit ? "StatusDisabled" : "StatusEnabled";
                     return $"<span class='{cssClass}'>{contactBounces}</span>";
             }
 
@@ -151,79 +186,43 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
 
         /// <summary>
-        /// Loads the list of emails on the SendGrid bounce suppression list.
+        /// Returns a cached list of emails on the SendGrid bounce suppression list or null if there are errors.
         /// </summary>
-        private void LoadBounceData()
+        private IEnumerable<SendGridBounce> GetBounceData()
         {
-            var cachedResponse = CacheHelper.Cache((cs) => {
+            return CacheHelper.Cache((cs) => {
                 var sendGridClient = Service.ResolveOptional<ISendGridClient>();
                 if (sendGridClient == null)
                 {
+                    ShowError("The SendGrid client is not configured properly.");
+                    cs.Cached = false;
                     return null;
                 }
 
-                return sendGridClient.RequestAsync(
+                var response = sendGridClient.RequestAsync(
                     method: BaseClient.Method.GET,
                     urlPath: "suppression/bounces"
                 ).ConfigureAwait(false).GetAwaiter().GetResult();
+                var responseBody = response.Body.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
+                if (response.IsSuccessStatusCode)
+                {
+                    return JsonConvert.DeserializeObject<IEnumerable<SendGridBounce>>(responseBody);
+                }
+
+                var responseError = JsonConvert.DeserializeObject<SendGridApiErrorResponse>(responseBody);
+                var errorDescriptions = responseError.Errors.Select(err =>
+                {
+                    var prefix = String.IsNullOrEmpty(err.Field) ? String.Empty : $"Field \"{err.Field}\": ";
+                    return $"- {prefix}\"{err.Message}\"";
+                });
+                var logDescription = $"Unable to load bounces from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
+                var eventLogService = Service.Resolve<IEventLogService>();
+
+                eventLogService.LogError(nameof(SuppressionManagement), nameof(GetBounceData), logDescription);
+                ShowError("Unable to load bounces from SendGrid. Please check the Event Log.");
+                return null;
+
             }, new CacheSettings(20, SendGridConstants.CACHE_KEY_BOUNCES));
-
-            if (cachedResponse == null)
-            {
-                ShowError("The SendGrid client is not configured properly.");
-                return;
-            }
-
-            var responseBody = cachedResponse.Body.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-            if (cachedResponse.IsSuccessStatusCode)
-            {
-                bounceData = JsonConvert.DeserializeObject<IEnumerable<SendGridBounce>>(responseBody);
-                return;
-            }
-
-            gridReport.Visible = false;
-            gridReport.StopProcessing = true;
-
-            var responseError = JsonConvert.DeserializeObject<SendGridApiErrorResponse>(responseBody);
-            var errorDescriptions = responseError.Errors.Select(err =>
-            {
-                var prefix = String.IsNullOrEmpty(err.Field) ? String.Empty : $"Field \"{err.Field}\": ";
-                return $"- {prefix}\"{err.Message}\"";
-            });
-            var logDescription = $"Unable to load bounces from SendGrid:\r\n\r\n{String.Join("\r\n", errorDescriptions)}";
-            var eventLogService = Service.Resolve<IEventLogService>();
-
-            eventLogService.LogError(nameof(SuppressionManagement), nameof(LoadBounceData), logDescription);
-            ShowError("Unable to load bounces from SendGrid. Please check the Event Log.");
-        }
-
-
-        /// <summary>
-        /// Loads the subscribers of the current <see cref="EditedNewsletterOrIssue"/> and binds the UniGrid.
-        /// </summary>
-        private void LoadGridData()
-        {
-            if (gridReport.StopProcessing)
-            {
-                return;
-            }
-
-            if (EditedNewsletterOrIssue is NewsletterInfo)
-            {
-                subscribedContacts = LoadNewsletterSubscribers(EditedNewsletterOrIssue as NewsletterInfo);
-            }
-            else if (EditedNewsletterOrIssue is IssueInfo)
-            {
-                subscribedContacts = LoadCampaignIssueSubscribers(EditedNewsletterOrIssue as IssueInfo);
-            }
-
-            if (subscribedContacts == null)
-            {
-                gridReport.StopProcessing = true;
-                return;
-            }
-
-            gridReport.DataSource = subscribedContacts;
         }
 
 
@@ -238,21 +237,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 return;
             }
 
-            Func<Func<SuppressionManagementActionParameters, string>, string, string, CreateUrlDelegate> functionConverter = (generateActionFunction, actionName, title) =>
-            {
-                return (scope, selectedNodeIDs, parameters) =>
-                {
-                    var suppressionManagementParameters = new SuppressionManagementActionParameters
-                    {
-                        ActionName = actionName,
-                        Title = title,
-                        ContactIDs = scope == MassActionScopeEnum.AllItems ? subscribedContacts.Select(c => c.ContactID).ToList() : selectedNodeIDs,
-                        ReloadScript = gridReport.GetReloadScript()
-                };
-                    return generateActionFunction(suppressionManagementParameters);
-                };
-            };
-
             ctrlMassActions.SelectedItemsClientID = gridReport.GetSelectionFieldClientID();
             ctrlMassActions.SelectedItemsResourceString = "Selected subscribers";
             ctrlMassActions.AllItemsResourceString = "All subscribers";
@@ -261,13 +245,13 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 {
                     ActionType = MassActionTypeEnum.OpenModal,
                     CodeName = "Reset Xperience Bounces",
-                    CreateUrl = functionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_XPERIENCE_BOUNCE, "Reset Xperience Bounces")
+                    CreateUrl = FunctionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_XPERIENCE_BOUNCE, "Reset Xperience Bounces")
                 },
                 new MassActionItem
                 {
                     ActionType = MassActionTypeEnum.OpenModal,
                     CodeName = "Reset SendGrid Bounces",
-                    CreateUrl = functionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE, "Reset SendGrid Bounces")
+                    CreateUrl = FunctionConverter(GetMassActionUrl, SendGridConstants.ACTION_DELETE_SENDGRID_BOUNCE, "Reset SendGrid Bounces")
                 }
             );
         }
@@ -278,7 +262,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// to the mass action modal window.
         /// </summary>
         /// <param name="suppressionManagementParameters">Parameters related to the chosen mass action and selected contacts.</param>
-        /// <returns></returns>
         private string GetMassActionUrl(SuppressionManagementActionParameters suppressionManagementParameters)
         {
             var paramsIdentifier = Guid.NewGuid().ToString();
@@ -292,11 +275,30 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         }
 
 
-        private InfoDataSet<ContactInfo> LoadCampaignIssueSubscribers(IssueInfo issue)
+        /// <summary>
+        /// Gets the subscribers of the current newsletter or email campaign issue.
+        /// </summary>
+        /// <param name="additionalWhere">A where condition to apply to the subscriber query.</param>
+        private ObjectQuery<ContactInfo> GetSubscribers(string additionalWhere = null)
+        {
+            ObjectQuery<ContactInfo> query = new ObjectQuery<ContactInfo>();
+            if (EditedNewsletterOrIssue is NewsletterInfo)
+            {
+                query = LoadNewsletterSubscribers(EditedNewsletterOrIssue as NewsletterInfo);
+            }
+            else if (EditedNewsletterOrIssue is IssueInfo)
+            {
+                query = LoadCampaignIssueSubscribers(EditedNewsletterOrIssue as IssueInfo);
+            }
+
+            return query.Where(additionalWhere);
+        }
+
+
+        private ObjectQuery<ContactInfo> LoadCampaignIssueSubscribers(IssueInfo issue)
         {
             var contactsWithEmail = ContactInfo.Provider.Get()
-                .WhereNotEmpty(nameof(ContactInfo.ContactEmail))
-                .Columns(nameof(ContactInfo.ContactID), nameof(ContactInfo.ContactEmail), nameof(ContactInfo.ContactBounces));
+                .WhereNotEmpty(nameof(ContactInfo.ContactEmail));
             var contactGroupIds = IssueContactGroupInfo.Provider.Get()
                 .Column(nameof(IssueContactGroupInfo.ContactGroupID))
                 .WhereEquals(nameof(IssueContactGroupInfo.IssueID), issue.IssueID);
@@ -306,15 +308,14 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 .WhereIn(nameof(ContactGroupMemberInfo.ContactGroupMemberContactGroupID), contactGroupIds);
             return contactsWithEmail.Where(where => where
                 .WhereIn(nameof(ContactInfo.ContactID), contactGroupMemberIds)
-            ).TypedResult;
+            );
         }
 
 
-        private InfoDataSet<ContactInfo> LoadNewsletterSubscribers(NewsletterInfo newsletter)
+        private ObjectQuery<ContactInfo> LoadNewsletterSubscribers(NewsletterInfo newsletter)
         {
             var contactsWithEmail = ContactInfo.Provider.Get()
-                .WhereNotEmpty(nameof(ContactInfo.ContactEmail))
-                .Columns(nameof(ContactInfo.ContactID), nameof(ContactInfo.ContactEmail), nameof(ContactInfo.ContactBounces));
+                .WhereNotEmpty(nameof(ContactInfo.ContactEmail));
             var contactSubscriberIds = GetNewsletterContactSubscriberIds(newsletter.NewsletterID);
             var contactGroupMemberIds = GetNewsletterContactGroupMemberIds(newsletter.NewsletterID);
 
@@ -322,7 +323,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 .WhereIn(nameof(ContactInfo.ContactID), contactSubscriberIds)
                 .Or()
                 .WhereIn(nameof(ContactInfo.ContactID), contactGroupMemberIds)
-            ).TypedResult;
+            );
         }
 
 

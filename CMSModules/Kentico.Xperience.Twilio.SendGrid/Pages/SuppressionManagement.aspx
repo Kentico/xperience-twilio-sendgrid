@@ -7,17 +7,18 @@
 <asp:Content ID="cntBody" runat="server" ContentPlaceHolderID="plcContent">
     <div class="cms-bootstrap" style="margin-top:10px">
         <cms:LocalizedHeading runat="server" Level="4" Text="Subscribed contacts" />
-        <cms:UniGrid ID="gridReport" runat="server" ShowExportMenu="true" EnableViewState="false" IsLiveSite="false">
+        <cms:UniGrid ID="gridReport" runat="server" ShowExportMenu="true" EnableViewState="false" IsLiveSite="false"
+            Columns="ContactID,ContactEmail,ContactBounces">
             <GridColumns>
                 <ug:Column runat="server" Source="ContactEmail" Caption="Email" Wrap="false">
                     <Filter Type="Text" />
                 </ug:Column>
                 <ug:Column runat="server" Source="ContactID" Caption="Name" ExternalSourceName="#transform: om.contact: {%ContactDescriptiveName%}" Wrap="false" />
-                <ug:Column runat="server" Source="ContactEmail" Caption="Bounced in SendGrid" ExternalSourceName="sg-bounced" Wrap="false" AllowSorting="false" />
-                <ug:Column runat="server" Source="ContactBounces" Caption="Bounces in Xperience" ExternalSourceName="kx-bounced" Wrap="false" AllowSorting="false" />
+                <ug:Column runat="server" Source="ContactEmail" Caption="Bounced in SendGrid" ExternalSourceName="sg-bounced" Wrap="false" />
+                <ug:Column runat="server" Source="ContactBounces" Caption="Bounces in Xperience" ExternalSourceName="kx-bounced" Wrap="false" />
                 <ug:Column runat="server" CssClass="filling-column" />
             </GridColumns>
-            <GridOptions ShowSelection="true" DisplayFilter="true" />
+            <GridOptions ShowSelection="true" DisplayFilter="true" AllowSorting="false" />
         </cms:UniGrid>
         <cms:MassActions ID="ctrlMassActions" runat="server" />
     </div>
