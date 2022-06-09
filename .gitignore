@@ -3,37 +3,6 @@
 ##
 ## Get latest from https://github.com/github/gitignore/blob/master/VisualStudio.gitignore
 
-# Xperience directories
-Admin/
-App_Data/
-App_Themes/
-CMSAdminControls/
-CMSFormControls/
-CMSInlineControls/
-CMSInstall/
-CMSMasterPages/
-CMSMessages/
-CMSModules/
-!CMSModules/Kentico.Xperience.Twilio.SendGrid/
-CMSPages/
-CMSResources/
-CMSScripts/
-CMSSiteUtils/
-CMSWebParts/
-DancingGoatCore/
-DancingGoatMvc/
-Old_App_Code/
-Old_App_WebReferences/
-Properties/
-
-# Xperience root directory files
-/*.asax
-/*.aspx
-/*.config
-/*.cs
-/*.csproj
-/*.svc
-
 # User-specific files
 *.rsuser
 *.suo

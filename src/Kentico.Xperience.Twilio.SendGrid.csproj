@@ -1,0 +1,36 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+	<PropertyGroup>
+		<TargetFrameworks>netstandard2.0</TargetFrameworks>
+		<RootNamespace>Kentico.Xperience.Twilio.SendGrid</RootNamespace>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Title>Xperience SendGrid</Title>
+		<PackageId>Kentico.Xperience.Twilio.SendGrid</PackageId>
+		<Version>0.0.3</Version>
+		<Authors>Kentico Software</Authors>
+		<Company>Kentico Software</Company>
+		<PackageIcon>icon.png</PackageIcon>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageTags>kentico xperience mvc core twilio sendgrid</PackageTags>
+		<Description>Dispatches Xperience emails using the SendGrid Web API.</Description>
+		<RepositoryUrl>https://github.com/Kentico/xperience-twilio-sendgrid</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<NoWarn>1591</NoWarn>
+		<LangVersion>7.3</LangVersion>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<None Include="..\img\icon.png" Pack="true" PackagePath="" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<PackageReference Include="Kentico.Xperience.Libraries" Version="13.0.0" />
+		<PackageReference Include="SendGrid" Version="9.28.0" />
+		<PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
+	</ItemGroup>
+
+</Project>

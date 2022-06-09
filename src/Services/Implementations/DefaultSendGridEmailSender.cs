@@ -107,11 +107,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
             {
                 var result = sendGridClient.SendEmailAsync(sendGridMessage).ConfigureAwait(false).GetAwaiter().GetResult();
                 var responseBody = result.Body.ReadAsStringAsync().ConfigureAwait(false).GetAwaiter().GetResult();
-                if (sendGridConfigurationProvider.DebugEnabled())
-                {
-                    eventLogService.LogInformation(nameof(DefaultSendGridEmailSender), nameof(SendEmail), $"Sent email:\r\n\r\n{JsonConvert.SerializeObject(sendGridMessage)}\r\n\r\nSendGrid response:\r\n\r\n{responseBody}");
-                }
-
                 if (!result.IsSuccessStatusCode)
                 {
                     var responseError = JsonConvert.DeserializeObject<SendGridApiErrorResponse>(responseBody);

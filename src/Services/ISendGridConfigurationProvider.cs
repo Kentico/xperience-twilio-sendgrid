@@ -8,12 +8,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
     public interface ISendGridConfigurationProvider
     {
         /// <summary>
-        /// Returns true if debugging is enabled and events should be logged to the Event Log.
-        /// </summary>
-        bool DebugEnabled();
-
-
-        /// <summary>
         /// Sets the IP pool name of the <paramref name="sendGridMessage"/>.
         /// </summary>
         /// <param name="siteName">The Xperience site name.</param>

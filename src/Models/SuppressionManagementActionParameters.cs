@@ -1,12 +1,9 @@
-﻿using Kentico.Xperience.Twilio.SendGrid.Pages;
-
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace Kentico.Xperience.Twilio.SendGrid.Models
 {
     /// <summary>
-    /// Parameters that are stored in session and retrieved when performing a mass action
-    /// with <see cref="SuppressionManagementMassAction"/>.
+    /// Parameters that are stored in session and retrieved when performing a mass action.
     /// </summary>
     public class SuppressionManagementActionParameters
     {

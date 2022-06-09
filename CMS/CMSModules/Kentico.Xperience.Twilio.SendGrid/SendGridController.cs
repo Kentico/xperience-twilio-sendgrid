@@ -1,8 +1,5 @@
-﻿using CMS.Core;
-
-using Kentico.Xperience.Twilio.SendGrid.Events;
+﻿using Kentico.Xperience.Twilio.SendGrid.Events;
 using Kentico.Xperience.Twilio.SendGrid.Models;
-using Kentico.Xperience.Twilio.SendGrid.Services;
 
 using Newtonsoft.Json;
 
@@ -31,11 +28,6 @@ namespace Kentico.Xperience.Twilio.SendGrid.Controllers
             if (String.IsNullOrEmpty(content))
             {
                 return Request.CreateResponse(HttpStatusCode.BadRequest);
-            }
-
-            if (Service.Resolve<ISendGridConfigurationProvider>().DebugEnabled())
-            {
-                Service.Resolve<IEventLogService>().LogInformation(nameof(SendGridController), nameof(ReceiveEvents), $"Received event webhook:\r\n\r\n{content}");
             }
 
             var validator = new SendGridWebhookValidator(content, Request);

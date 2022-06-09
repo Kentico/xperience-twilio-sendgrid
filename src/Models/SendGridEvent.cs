@@ -2,6 +2,8 @@
 
 using Newtonsoft.Json;
 
+using System.Collections.Generic;
+
 namespace Kentico.Xperience.Twilio.SendGrid.Models
 {
     /// <summary>
@@ -87,7 +89,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Models
         /// <summary>
         /// The categories of the message.
         /// </summary>
-        public string Category
+        [JsonProperty(PropertyName = "category")]
+        public IEnumerable<string> Categories
         {
             get;
             set;
