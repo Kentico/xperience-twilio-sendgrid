@@ -54,7 +54,7 @@ If you would like to use these features, follow these steps to install the custo
 
 After [installing](#install-the-nuget-package) the integration on the CMS and live-site applications, _all_ Xperience emails will be dispatched via SendGrid's [Web API](https://sendgrid.com/go/email-api-signup). When SendGrid successfully receives the email for further processing, the Xperience email will be removed from the __Email queue__ and archived or deleted. If SendGrid cannot successfully queue the email for processing, the Xperience email will remain in the queue with an error message.
 
-Emails are dispatched to SendGrid by the `ISendGridEmailSender`, of which you can find the default implementation [here](CMSModules/Kentico.Xperience.Twilio.SendGrid/Services/Implementations/DefaultSendGridEmailSender.cs). If you would like to customize email sending, you can create your own implementation of `ISendGridEmailSender` and register it with higher `Priority`:
+Emails are dispatched to SendGrid by the `ISendGridEmailSender`, of which you can find the default implementation [here](src/Services/Implementations/DefaultSendGridEmailSender.cs). If you would like to customize email sending, you can create your own implementation of `ISendGridEmailSender` and register it with higher `Priority`:
 
 ```cs
 [assembly: RegisterImplementation(typeof(ISendGridEmailSender), typeof(MyCustomSendGridEmailSender), Lifestyle = Lifestyle.Singleton, Priority = RegistrationPriority.Default)]
@@ -90,13 +90,13 @@ SendGrid has the ability to send webhooks to your Xperience administration websi
 SendGridEvents.Bounce.After += HandleSendGridBounce;
 ```
 
-You can view the available events in the [`SendGridEvents`](CMSModules/Kentico.Xperience.Twilio.SendGrid/Events/SendGridEvents.cs) class. To enable event webhook handling in your Xperience administration website:
+You can view the available events in the [`SendGridEvents`](src/Events/SendGridEvents.cs) class. To enable event webhook handling in your Xperience administration website:
 
 1. In SendGrid, open __Settings → Mail Settings → Event Webhook__.
 2. Set the following values:
   - Authorization Method: None.
   - HTTP Post URL: _https://[your Xperience CMS]/xperience-sendgrid/events_.
-  - Events to be POSTed to your URL: Select at least __Dropped__ and __Bounced__, and any other events you'd like to handle.
+  - Events to be POSTed to your URL: Select any events you'd like to handle.
   - Event Webhook Status: Enabled.
 3. In __Mail settings__, click __Signed Event Webhook Requests__.
 4. Enable _Signed Event Webhook Request Status_ and copy the __Verification Key__.
