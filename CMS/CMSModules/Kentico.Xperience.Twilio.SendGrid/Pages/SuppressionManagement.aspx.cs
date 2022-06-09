@@ -143,7 +143,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 return new DataSet();
             }
 
-            var query = GetSubscribers(gridReport.GetFilter());
+            var query = GetSubscribers();
             if (query == null)
             {
                 return new DataSet();
@@ -174,7 +174,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                     }
 
                     var email = ValidationHelper.GetString(parameter, String.Empty);
-                    return UniGridFunctions.ColoredSpanYesNo(bounceData.Any(b => b.Email == email));
+                    return UniGridFunctions.ColoredSpanYesNo(bounceData.Any(b => b.Email.Equals(email, StringComparison.InvariantCultureIgnoreCase)));
                 case "kx-bounced":
                     var contactBounces = ValidationHelper.GetInteger(parameter, 0);
                     var cssClass = contactBounces >= BounceLimit ? "StatusDisabled" : "StatusEnabled";
