@@ -31,6 +31,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
         {
             var mailSettings = new MailSettings()
             {
+                /* Uncomment these lines to customize SendGrid mail settings
                 FooterSettings = new FooterSettings()
                 {
                     Enable = false
@@ -46,8 +47,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                 SandboxMode = new SandboxMode()
                 {
                     Enable = false
-                }
-                /* Only one of these features may enabled at a time.
+                },
+                // Only one of the below features may enabled at a time
                 BypassListManagement = new BypassListManagement()
                 {
                     Enable = false
@@ -75,6 +76,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
         {
             var trackingSettings = new TrackingSettings()
             {
+                /* Uncomment these lines to customize SendGrid tracking settings
                 ClickTracking = new ClickTracking()
                 {
                     Enable = false
@@ -91,6 +93,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
                 {
                     Enable = false
                 }
+                */
             };
 
             sendGridMessage.TrackingSettings = trackingSettings;
