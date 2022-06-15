@@ -125,6 +125,6 @@ Distributed under the MIT License. See [LICENSE.md](LICENSE.md) for more informa
 
 [stackoverflow-shield]: https://img.shields.io/badge/Stack%20Overflow-ASK%20NOW-FE7A16.svg?logo=stackoverflow&logoColor=white
 [stackoverflow-url]: https://stackoverflow.com/tags/kentico
-[xperience-shield]: https://img.shields.io/badge/Kentico.Xperience.Libraries-v13.0.0-orange
+[xperience-shield]: https://img.shields.io/badge/Kentico.Xperience.Libraries-v13.0.73-orange
 [xperience-url]: https://www.nuget.org/packages/Kentico.Xperience.Libraries
 [suppressions-img]: /img/suppressions.png
