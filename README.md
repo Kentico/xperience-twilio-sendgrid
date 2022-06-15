@@ -36,6 +36,8 @@ public void ConfigureServices(IServiceCollection services)
 
 ### (Optional) Import the custom module
 
+> __Note__ Not yet released! ETA: end of June 2022.
+
 You may choose to import a custom module into your Xperience administration website to enable new functionality:
 
 - [SendGrid Event Webhooks](#handling-sendgrid-event-webhooks)
