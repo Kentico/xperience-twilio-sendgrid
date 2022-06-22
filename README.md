@@ -26,7 +26,9 @@ Additional functionality such as handling SendGrid events and an interface to ma
 
 - __Core__ - _appSettings.json_
 ```json
-"SendGridApiKey": "<API key>",
+"xperience.twilio.sendgrid": {
+  "apiKey": "<API key>"
+}
 ```
 - __MVC__ - _web.config_
 ```xml
