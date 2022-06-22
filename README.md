@@ -6,6 +6,8 @@
 
 This integration allows the dipatching of all Xperience emails from the __Email queue__ to SendGrid using their reliable [Web API](https://sendgrid.com/go/email-api-signup). Using the Web API offers [faster email processing](https://sendgrid.com/blog/web-api-or-smtp-relay-how-should-you-send-your-mail/), so you can squeeze out the most performance while sending those big marketing campaigns!
 
+Additional functionality such as handling SendGrid events and an interface to manage Xperience and SendGrid suppressions will be released at the beginning of July 2022.
+
 ## Set up the environment
 
 ### Install the NuGet package
@@ -74,6 +76,7 @@ namespace MySite.Twilio.SendGrid {
 ```
 
 This could be helpful if, for example, you want to use a different IP Pool for each Xperience site. Or, if you want tracking to be enabled only for certain emails.
+
 
 ## Feedback & Contributing
 
