@@ -149,7 +149,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                 return new DataSet();
             }
 
-            query = query.Where(completeWhere)
+            query = query.Where(gridReport.GetFilter())
                 .OrderBy(currentOrder)
                 .TopN(currentTopN)
                 .Columns(columns);

@@ -18,7 +18,7 @@
                 <ug:Column runat="server" Source="ContactBounces" Caption="Bounces in Xperience" ExternalSourceName="kx-bounced" Wrap="false" />
                 <ug:Column runat="server" CssClass="filling-column" />
             </GridColumns>
-            <GridOptions ShowSelection="true" DisplayFilter="true" AllowSorting="false" />
+            <GridOptions ShowSelection="true" DisplayFilter="true" AllowSorting="false" FilterLimit="5" />
         </cms:UniGrid>
         <cms:MassActions ID="ctrlMassActions" runat="server" />
     </div>
