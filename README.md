@@ -95,6 +95,8 @@ This could be helpful if, for example, you want to use a different IP Pool for e
 
 ## Handling SendGrid Event Webhooks
 
+> __Note__ Requires installation of the [custom module](#optional-import-the-custom-module).
+
 SendGrid has the ability to send webhooks to your Xperience administration website when [certain events](https://docs.sendgrid.com/for-developers/tracking-events/event#delivery-events) occur. SendGrid event handling is implemented via standard [Xperience event handling](https://docs.xperience.io/x/zgyRBg), so you can handle SendGrid event webhooks like this:
 
 ```cs
