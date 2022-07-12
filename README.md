@@ -4,9 +4,7 @@
 
 # Xperience SendGrid Integration
 
-This integration allows the dipatching of all Xperience emails from the __Email queue__ to SendGrid using their reliable [Web API](https://sendgrid.com/go/email-api-signup). Using the Web API offers [faster email processing](https://sendgrid.com/blog/web-api-or-smtp-relay-how-should-you-send-your-mail/), so you can squeeze out the most performance while sending those big marketing campaigns!
-
-Additional functionality such as handling SendGrid events and an interface to manage Xperience and SendGrid suppressions will be released at the beginning of July 2022.
+This integration allows the dipatching of all Xperience emails from the __Email queue__ to SendGrid using their reliable [Web API](https://sendgrid.com/go/email-api-signup). Using the Web API offers [faster email processing](https://sendgrid.com/blog/web-api-or-smtp-relay-how-should-you-send-your-mail/), so you can squeeze out the most performance while sending those big marketing campaigns! The sending process is highly customizable and you can even use standard Xperience event handlers to react to SendGrid events such as email drops and bounces, or opens and clicks.
 
 ## Set up the environment
 
@@ -42,6 +40,22 @@ public void ConfigureServices(IServiceCollection services)
     services.AddSendGrid(Configuration);
 }
 ```
+
+### (Optional) Import the custom module
+
+You may choose to import a custom module into your Xperience administration project to enable additional functionality:
+
+- [SendGrid Event Webhooks](#handling-sendgrid-event-webhooks)
+- [Suppression management](#suppression-management)
+
+If you would like to use these features, follow these steps to install the custom module:
+
+1. Open your administration project in __Visual Studio__.
+1. Download the latest _"Kentico.Xperience.Twilio.SendGrid"_ ZIP package from the [Releases](https://github.com/Kentico/xperience-twilio-sendgrid/releases/).
+1. In the Xperience administration, open the __Sites__ application.
+1. [Import](https://docs.xperience.io/x/VAeRBg) the downloaded package with the __Import files__ and __Import code files__ [settings](https://docs.xperience.io/x/VAeRBg#Importingasiteorobjects-Import-Objectselectionsettings) enabled.
+1. Perform the [necessary steps](https://docs.xperience.io/x/VAeRBg#Importingasiteorobjects-Importingpackageswithfiles) to include the following imported folder in your project:
+   - `/CMSModules/Kentico.Xperience.Twilio.SendGrid`
 
 ## SendGrid email sending
 
@@ -79,6 +93,38 @@ namespace MySite.Twilio.SendGrid {
 
 This could be helpful if, for example, you want to use a different IP Pool for each Xperience site. Or, if you want tracking to be enabled only for certain emails.
 
+## Handling SendGrid Event Webhooks
+
+SendGrid has the ability to send webhooks to your Xperience administration website when [certain events](https://docs.sendgrid.com/for-developers/tracking-events/event#delivery-events) occur. SendGrid event handling is implemented via standard [Xperience event handling](https://docs.xperience.io/x/zgyRBg), so you can handle SendGrid event webhooks like this:
+
+```cs
+SendGridEvents.Bounce.After += HandleSendGridBounce;
+```
+
+You can view the available events in the [`SendGridEvents`](src/Events/SendGridEvents.cs) class. To enable event webhook handling in your Xperience administration website:
+
+1. In SendGrid, open __Settings → Mail Settings → Event Webhook__.
+2. Set the following values:
+  - Authorization Method: None.
+  - HTTP Post URL: _https://[your Xperience CMS]/xperience-sendgrid/events_.
+  - Events to be POSTed to your URL: Select any events you'd like to handle.
+  - Event Webhook Status: Enabled.
+3. In __Mail settings__, click __Signed Event Webhook Requests__.
+4. Enable _Signed Event Webhook Request Status_ and copy the __Verification Key__.
+5. In the CMS project's web.config `appSettings` section, add the following setting:
+```xml
+<add key="SendGridWebhookVerificationKey" value="<Verification key>"/>
+```
+
+## Suppression management
+
+> __Note__ Requires installation of the [custom module](#optional-import-the-custom-module).
+
+Within the Xperience __Email marketing__ application you will find a new tab called _"Suppressions."_ This interface allows you to manage Xperience and SendGrid email suppressions for subscribers of the newsletter or email campaign. For newsletters, the tab can be found when editing the newsletter. For email campaigns, it appears when editing an individual email of the campaign.
+
+![suppressions-img]
+
+The __Bounced in SendGrid__ column indicates whether the email is listed under SendGrid's __Suppressions → Bounces__ list. The __Bounces in Xperience__ column lists the number of bounces recorded in the Xperience database, and will be red if the number of bounces exceeds the _"Bounced email limit"_ setting in __Settings → On-line marketing → Email marketing__. Using the checkboxes and drop-down menu at the bottom of the grid, you can reset these bounces to ensure that your emails are delivered to the recipients.
 
 ## Feedback & Contributing
 
