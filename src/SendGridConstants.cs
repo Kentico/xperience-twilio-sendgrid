@@ -3,7 +3,7 @@
     /// <summary>
     /// Constants used in the SendGrid integration.
     /// </summary>
-    public class SendGridConstants
+    public static class SendGridConstants
     {
         /// <summary>
         /// UniGrid mass action key for deleting Xperience bounces.

@@ -15,8 +15,10 @@ namespace Kentico.Xperience.Twilio.SendGrid
     /// </summary>
     public class SendGridWebhookValidator
     {
-        private string payload;
-        private HttpRequestMessage request;
+        private readonly IAppSettingsService appSettingsService;
+        private readonly IEventLogService eventLogService;
+        private readonly string payload;
+        private readonly HttpRequestMessage request;
 
 
         /// <summary>
@@ -28,6 +30,8 @@ namespace Kentico.Xperience.Twilio.SendGrid
         {
             this.payload = payload;
             this.request = request;
+            eventLogService = Service.Resolve<IEventLogService>();
+            appSettingsService = Service.Resolve<IAppSettingsService>();
         }
 
 
@@ -36,8 +40,6 @@ namespace Kentico.Xperience.Twilio.SendGrid
         /// </summary>
         public bool VerifySignature()
         {
-            var eventLogService = Service.Resolve<IEventLogService>();
-            var appSettingsService = Service.Resolve<IAppSettingsService>();
             if (String.IsNullOrEmpty(payload) || request == null)
             {
                 eventLogService.LogError(nameof(SendGridWebhookValidator), nameof(VerifySignature), "SendGridWebhookValidator parameters are invalid.");

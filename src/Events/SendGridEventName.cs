@@ -5,7 +5,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Events
     /// <summary>
     /// Contains constants for all possible values of <see cref="SendGridEvent.Event"/> or <see cref="SendGridEvent.Type"/>.
     /// </summary>
-    public class SendGridEventName
+    public static class SendGridEventName
     {
         /// <summary>
         /// Triggers when a receiving server could not or would not accept the message temporarily.

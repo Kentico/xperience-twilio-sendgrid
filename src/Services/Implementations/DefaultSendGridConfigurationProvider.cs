@@ -24,79 +24,19 @@ namespace Kentico.Xperience.Twilio.SendGrid.Services
 
         public void SetIpPoolName(string siteName, SendGridMessage sendGridMessage)
         {
+            // Don't set IP Pool name by default
         }
 
 
         public void SetMailSettings(string siteName, SendGridMessage sendGridMessage)
         {
-            var mailSettings = new MailSettings()
-            {
-                /* Uncomment these lines to customize SendGrid mail settings
-                FooterSettings = new FooterSettings()
-                {
-                    Enable = false
-                },
-                SpamCheck = new SpamCheck()
-                {
-                    Enable = false
-                },
-                BccSettings = new BCCSettings()
-                {
-                    Enable = false
-                },
-                SandboxMode = new SandboxMode()
-                {
-                    Enable = false
-                },
-                // Only one of the below features may enabled at a time
-                BypassListManagement = new BypassListManagement()
-                {
-                    Enable = false
-                },
-                BypassSpamManagement = new BypassSpamManagement()
-                {
-                    Enable = false
-                },
-                BypassUnsubscribeManagement = new BypassUnsubscribeManagement()
-                {
-                    Enable = true
-                },
-                BypassBounceManagement = new BypassBounceManagement()
-                {
-                    Enable = true
-                }
-                */
-            };
-
-            sendGridMessage.MailSettings = mailSettings;
+            sendGridMessage.MailSettings = new MailSettings();
         }
 
 
         public void SetTrackingSettings(string siteName, SendGridMessage sendGridMessage)
         {
-            var trackingSettings = new TrackingSettings()
-            {
-                /* Uncomment these lines to customize SendGrid tracking settings
-                ClickTracking = new ClickTracking()
-                {
-                    Enable = false
-                },
-                OpenTracking = new OpenTracking()
-                {
-                    Enable = false
-                },
-                SubscriptionTracking = new SubscriptionTracking()
-                {
-                    Enable = false
-                },
-                Ganalytics = new Ganalytics()
-                {
-                    Enable = false
-                }
-                */
-            };
-
-            sendGridMessage.TrackingSettings = trackingSettings;
+            sendGridMessage.TrackingSettings = new TrackingSettings();
         }
     }
 }

@@ -245,7 +245,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
 
             var emails = GetSelectedContacts()
                 .Take(SHOWN_RECORDS_NUMBER)
-                .ToList()
+                .AsEnumerable()
                 .Where(contact => contact.CheckPermissions(PermissionsEnum.Read, CurrentSiteName, CurrentUser))
                 .Select(contact => contact.ContactEmail);
             foreach (var email in emails)
@@ -306,7 +306,7 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
                                 DeleteSendGridBounces(contact, errorLog, logProgress);
                                 break;
                             case SendGridConstants.ACTION_DELETE_XPERIENCE_BOUNCE:
-                                DeleteXperienceBounces(contact, errorLog, logProgress);
+                                DeleteXperienceBounces(contact, logProgress);
                                 break;
                         }
                     });
@@ -328,9 +328,8 @@ namespace Kentico.Xperience.Twilio.SendGrid.Pages
         /// Sets <see cref="ContactInfo.ContactBounces"/> to zero for the provided <paramref name="contact"/>.
         /// </summary>
         /// <param name="contact">Contact whose bounces will be deleted.</param>
-        /// <param name="errorLog"> Log where errors will be recorded.</param>
         /// <param name="logProgress">Log where progress will be recorded.</param>
-        private void DeleteXperienceBounces(ContactInfo contact, StringBuilder errorLog, LogContext logProgress)
+        private void DeleteXperienceBounces(ContactInfo contact, LogContext logProgress)
         {
             var displayableName = HTMLHelper.HTMLEncode(contact.ContactEmail);
             using (new CMSActionContext { LogEvents = false })
