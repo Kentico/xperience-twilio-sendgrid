@@ -33,6 +33,16 @@ namespace Kentico.Xperience.Twilio.SendGrid.Models
             set;
         }
 
+        /// <summary>
+        /// The Xperience newsletter contact ID.
+        /// </summary>
+        [JsonProperty(PropertyName = "X-CMS-ContactID")]
+        public string ContactId
+        {
+            get;
+            set;
+        }
+
 
         /// <summary>
         /// The email address of the recipient.
