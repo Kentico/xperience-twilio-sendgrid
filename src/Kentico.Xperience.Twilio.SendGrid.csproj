@@ -8,7 +8,7 @@
 	<PropertyGroup>
 		<Title>Xperience SendGrid</Title>
 		<PackageId>Kentico.Xperience.Twilio.SendGrid</PackageId>
-		<Version>1.0.1</Version>
+		<Version>1.0.2</Version>
 		<Authors>Kentico Software</Authors>
 		<Company>Kentico Software</Company>
 		<PackageIcon>icon.png</PackageIcon>
