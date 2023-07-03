@@ -7,7 +7,7 @@
 <asp:Content ID="cntBody" runat="server" ContentPlaceHolderID="plcContent">
     <div class="cms-bootstrap" style="margin-top:10px">
         <cms:LocalizedHeading runat="server" Level="4" Text="Subscribed contacts" />
-        <cms:UniGrid ID="gridReport" runat="server" ShowExportMenu="true" EnableViewState="false" IsLiveSite="false"
+        <cms:UniGrid ID="gridReport" runat="server" ShowExportMenu="true" IsLiveSite="false"
             Columns="ContactID,ContactEmail,ContactBounces">
             <GridColumns>
                 <ug:Column runat="server" Source="ContactEmail" Caption="Email" Wrap="false">
