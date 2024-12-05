@@ -28,7 +28,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Kentico.Xperience.Libraries" Version="13.0.73" />
+		<PackageReference Include="Kentico.Xperience.Libraries" Version="13.0.137" />
 		<PackageReference Include="SendGrid" Version="9.28.0" />
 		<PackageReference Include="System.Configuration.ConfigurationManager" Version="6.0.0" />
 	</ItemGroup>
